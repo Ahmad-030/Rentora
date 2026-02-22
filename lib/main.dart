@@ -1245,6 +1245,7 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 30),
+              // ── Logo + App name ──
               Row(
                 children: [
                   Container(
@@ -1278,12 +1279,46 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
               const SizedBox(height: 50),
+
               const Text('Welcome back',
                   style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
               const SizedBox(height: 6),
-              const Text('Sign in to your account',
+              // ── UPDATED: clarify both owners and agents can login ──
+              const Text('Owners & agents can sign in here',
                   style: TextStyle(color: Colors.black54)),
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
+
+              // ── Info banner for agents ──
+              Container(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: RentoraTheme.primary.withOpacity(0.06),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                      color: RentoraTheme.primary.withOpacity(0.2)),
+                ),
+                child: Row(
+                  children: const [
+                    Icon(Icons.info_outline,
+                        size: 16, color: RentoraTheme.primary),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Agents: use the credentials provided by your admin.',
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: RentoraTheme.primary,
+                            fontWeight: FontWeight.w500,
+                            height: 1.4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // ── Form ──
               Form(
                 key: _form,
                 child: Column(
@@ -1387,9 +1422,19 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 32),
               const Divider(),
               const SizedBox(height: 20),
-              const Text("Don't have a business account?",
-                  style: TextStyle(color: Colors.black54, fontSize: 14)),
-              const SizedBox(height: 10),
+
+              // ── UPDATED: bottom section for new business registration ──
+              const Text("Don't have a business account yet?",
+                  style: TextStyle(
+                      color: Colors.black54,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500)),
+              const SizedBox(height: 4),
+              const Text(
+                'Register your company to get started as an owner.',
+                style: TextStyle(color: Colors.black38, fontSize: 12),
+              ),
+              const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(

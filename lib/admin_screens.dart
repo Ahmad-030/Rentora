@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import 'dart:io';
 import 'shared.dart';
 
@@ -73,7 +75,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 }
 
 // ─────────────────────────────────────────────
-// HOME TAB — Fixed Total Revenue
+// HOME TAB
 // ─────────────────────────────────────────────
 
 class AdminHomeTab extends StatelessWidget {
@@ -111,12 +113,10 @@ class AdminHomeTab extends StatelessWidget {
               final rented =
                   vehicles.where((v) => v.status == 'rented').length;
 
-              // ✅ FIXED: Total revenue = sum of ALL completed bookings
               final totalRevenue = bookings
                   .where((b) => b.status == 'completed')
                   .fold(0.0, (sum, b) => sum + b.totalAmount);
 
-              // Pending payments count
               final pending = bookings
                   .where((b) => b.remaining > 0 && b.status == 'active')
                   .length;
@@ -219,7 +219,7 @@ class AdminHomeTab extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
-// VEHICLES TAB (shared between Admin & Agent view)
+// VEHICLES TAB
 // ─────────────────────────────────────────────
 
 class VehiclesTab extends StatelessWidget {
@@ -312,7 +312,8 @@ class VehiclesTab extends StatelessWidget {
 class VehicleFormScreen extends StatefulWidget {
   final AppUser user;
   final Vehicle? vehicle;
-  const VehicleFormScreen({super.key, required this.user, required this.vehicle});
+  const VehicleFormScreen(
+      {super.key, required this.user, required this.vehicle});
 
   @override
   State<VehicleFormScreen> createState() => _VehicleFormScreenState();
@@ -342,11 +343,68 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
     }
   }
 
+  // ─────────────────────────────────────────────
+  // FIXED _pickImage:
+  // Let image_picker handle permissions natively.
+  // Only show a dialog if picker throws a genuine
+  // permission error — NOT on simple user cancel.
+  // ─────────────────────────────────────────────
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final picked =
-    await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
-    if (picked != null) setState(() => _imageFile = File(picked.path));
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+      );
+      // picked is null when user simply cancels — that's fine, do nothing.
+      if (picked != null && mounted) {
+        setState(() => _imageFile = File(picked.path));
+      }
+    } catch (e) {
+      // Only show settings dialog for actual permission errors.
+      final msg = e.toString().toLowerCase();
+      final isPermissionError = msg.contains('permission') ||
+          msg.contains('denied') ||
+          msg.contains('access');
+      if (isPermissionError && mounted) {
+        _showPermissionDialog();
+      }
+    }
+  }
+
+  void _showPermissionDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.photo_library, color: RentoraTheme.primary),
+            SizedBox(width: 10),
+            Text('Permission Required'),
+          ],
+        ),
+        content: const Text(
+          'Gallery access was denied.\n\n'
+              'Please enable it in your device Settings → App Permissions → Photos.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.settings, size: 16),
+            label: const Text('Open Settings'),
+            onPressed: () {
+              Navigator.pop(context);
+              openAppSettings();
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _save() async {
@@ -387,8 +445,9 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar:
-      AppBar(title: Text(widget.vehicle == null ? 'Add Vehicle' : 'Edit Vehicle')),
+      appBar: AppBar(
+          title:
+          Text(widget.vehicle == null ? 'Add Vehicle' : 'Edit Vehicle')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Form(
@@ -421,7 +480,8 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
                           size: 40, color: RentoraTheme.primary),
                       SizedBox(height: 8),
                       Text('Tap to upload image',
-                          style: TextStyle(color: Colors.black45)),
+                          style:
+                          TextStyle(color: Colors.black45)),
                     ],
                   ),
                 ),
@@ -512,8 +572,8 @@ class VehicleDetailScreen extends StatelessWidget {
                 context: context,
                 builder: (_) => AlertDialog(
                   title: const Text('Delete Vehicle'),
-                  content:
-                  const Text('Are you sure you want to delete this vehicle?'),
+                  content: const Text(
+                      'Are you sure you want to delete this vehicle?'),
                   actions: [
                     TextButton(
                         onPressed: () => Navigator.pop(context, false),
@@ -558,13 +618,14 @@ class VehicleDetailScreen extends StatelessWidget {
                     Expanded(
                         child: Text(vehicle.name,
                             style: const TextStyle(
-                                fontSize: 22, fontWeight: FontWeight.w800))),
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800))),
                     StatusBadge(vehicle.status),
                   ]),
                   const SizedBox(height: 8),
                   Text(vehicle.model,
-                      style:
-                      const TextStyle(color: Colors.black54, fontSize: 16)),
+                      style: const TextStyle(
+                          color: Colors.black54, fontSize: 16)),
                   const SizedBox(height: 16),
                   _info('Number Plate', vehicle.plate, Icons.badge),
                   _info('Daily Rate',
@@ -600,7 +661,7 @@ class VehicleDetailScreen extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
-// BOOKINGS TAB — with delete on Completed
+// BOOKINGS TAB
 // ─────────────────────────────────────────────
 
 class BookingsTab extends StatefulWidget {
@@ -667,7 +728,8 @@ class _BookingsTabState extends State<BookingsTab>
       {bool canDelete = false}) {
     if (bookings.isEmpty) {
       return const Center(
-          child: Text('No bookings', style: TextStyle(color: Colors.black45)));
+          child:
+          Text('No bookings', style: TextStyle(color: Colors.black45)));
     }
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -697,7 +759,7 @@ class _BookingsTabState extends State<BookingsTab>
 }
 
 // ─────────────────────────────────────────────
-// DISMISSIBLE BOOKING TILE (swipe to delete)
+// DISMISSIBLE BOOKING TILE
 // ─────────────────────────────────────────────
 
 class _DismissibleBookingTile extends StatelessWidget {
@@ -709,7 +771,8 @@ class _DismissibleBookingTile extends StatelessWidget {
     final result = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
             Icon(Icons.delete_outline, color: Colors.red),
@@ -745,8 +808,7 @@ class _DismissibleBookingTile extends StatelessWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content:
-              Text('Booking for ${booking.customerName} deleted'),
+              content: Text('Booking for ${booking.customerName} deleted'),
               backgroundColor: RentoraTheme.error,
               action: SnackBarAction(
                 label: 'Dismiss',
@@ -812,8 +874,8 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
   void initState() {
     super.initState();
     FirebaseService.vehiclesStream(widget.user.companyId).listen((v) {
-      setState(() => _vehicles =
-          v.where((x) => x.status == 'available').toList());
+      setState(
+              () => _vehicles = v.where((x) => x.status == 'available').toList());
     });
   }
 
@@ -831,20 +893,19 @@ class _BookingFormScreenState extends State<BookingFormScreen> {
       firstDate: isStart ? now : (_start ?? now),
       lastDate: now.add(const Duration(days: 365)),
     );
-    if (date != null)
-      setState(() => isStart ? _start = date : _end = date);
+    if (date != null) setState(() => isStart ? _start = date : _end = date);
   }
 
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
     if (_start == null || _end == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Select rental dates')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Select rental dates')));
       return;
     }
     if (_selectedVehicle == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Select a vehicle')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Select a vehicle')));
       return;
     }
     setState(() => _loading = true);
@@ -1087,15 +1148,18 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                       Expanded(
                           child: Text(b.customerName,
                               style: const TextStyle(
-                                  fontSize: 20, fontWeight: FontWeight.w800))),
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800))),
                       StatusBadge(b.status),
                     ]),
                     const Divider(height: 24),
                     _row(Icons.directions_car, 'Vehicle', b.vehicleName),
                     _row(Icons.phone, 'Contact', b.contact),
                     _row(Icons.badge, 'CNIC', b.cnic),
-                    _row(Icons.calendar_today, 'Start', fmt.format(b.startDate)),
-                    _row(Icons.calendar_month, 'End', fmt.format(b.endDate)),
+                    _row(Icons.calendar_today, 'Start',
+                        fmt.format(b.startDate)),
+                    _row(
+                        Icons.calendar_month, 'End', fmt.format(b.endDate)),
                     _row(Icons.timelapse, 'Duration', '$days days'),
                     const Divider(height: 24),
                     _row(Icons.attach_money, 'Total',
@@ -1123,7 +1187,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             if (b.status == 'active') ...[
               const SizedBox(height: 24),
               const Text('Complete Return',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                  style:
+                  TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
               const SizedBox(height: 12),
               TextField(
                 controller: _damage,
@@ -1181,7 +1246,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 }
 
 // ─────────────────────────────────────────────
-// AGENTS TAB — with Delete button
+// AGENTS TAB
 // ─────────────────────────────────────────────
 
 class AgentsTab extends StatelessWidget {
@@ -1192,7 +1257,8 @@ class AgentsTab extends StatelessWidget {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
             Icon(Icons.person_remove, color: Colors.red),
@@ -1254,11 +1320,12 @@ class AgentsTab extends StatelessWidget {
                       size: 72, color: Colors.black12),
                   const SizedBox(height: 16),
                   const Text('No agents yet',
-                      style: TextStyle(
-                          color: Colors.black45, fontSize: 16)),
+                      style:
+                      TextStyle(color: Colors.black45, fontSize: 16)),
                   const SizedBox(height: 8),
                   const Text('Tap + to add your first agent',
-                      style: TextStyle(color: Colors.black38, fontSize: 13)),
+                      style:
+                      TextStyle(color: Colors.black38, fontSize: 13)),
                 ],
               ),
             );
@@ -1269,10 +1336,11 @@ class AgentsTab extends StatelessWidget {
             itemBuilder: (context, i) {
               final a = agents[i];
               return Card(
-                margin:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                margin: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 6),
                 child: ListTile(
-                  contentPadding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+                  contentPadding:
+                  const EdgeInsets.fromLTRB(16, 8, 8, 8),
                   leading: CircleAvatar(
                     backgroundColor: a.disabled
                         ? Colors.grey.shade400
@@ -1284,7 +1352,8 @@ class AgentsTab extends StatelessWidget {
                         style: const TextStyle(color: Colors.white)),
                   ),
                   title: Text(a.name,
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600)),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1312,8 +1381,8 @@ class AgentsTab extends StatelessWidget {
                     children: [
                       Switch(
                         value: !a.disabled,
-                        onChanged: (v) =>
-                            FirebaseService.updateAgentStatus(a.uid, !v),
+                        onChanged: (v) => FirebaseService.updateAgentStatus(
+                            a.uid, !v),
                         activeColor: RentoraTheme.success,
                       ),
                       IconButton(
@@ -1416,9 +1485,11 @@ class _AddAgentScreenState extends State<AddAgentScreen> {
                   labelText: 'Password',
                   prefixIcon: const Icon(Icons.lock),
                   suffixIcon: IconButton(
-                    icon: Icon(
-                        _obscure ? Icons.visibility : Icons.visibility_off),
-                    onPressed: () => setState(() => _obscure = !_obscure),
+                    icon: Icon(_obscure
+                        ? Icons.visibility
+                        : Icons.visibility_off),
+                    onPressed: () =>
+                        setState(() => _obscure = !_obscure),
                   ),
                 ),
                 obscureText: _obscure,
@@ -1477,7 +1548,8 @@ class _CredentialsDialogState extends State<_CredentialsDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape:
+      RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Row(
         children: [
           Container(
@@ -1520,7 +1592,9 @@ class _CredentialsDialogState extends State<_CredentialsDialog> {
             onCopy: () => _copy(widget.password, 'Password'),
             trailing: IconButton(
               icon: Icon(
-                _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                _obscurePassword
+                    ? Icons.visibility
+                    : Icons.visibility_off,
                 size: 18,
                 color: RentoraTheme.primary,
               ),
@@ -1659,7 +1733,8 @@ class AdminSettingsScreen extends StatelessWidget {
                         ),
                         child: const Text('Admin',
                             style: TextStyle(
-                                color: RentoraTheme.primary, fontSize: 11)),
+                                color: RentoraTheme.primary,
+                                fontSize: 11)),
                       ),
                     ],
                   ),
@@ -1675,16 +1750,18 @@ class AdminSettingsScreen extends StatelessWidget {
                   fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           _tile(context, 'Privacy Policy', Icons.privacy_tip_outlined, () {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()));
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const PrivacyPolicyScreen()));
           }),
           _tile(context, 'Contact Us', Icons.contact_support_outlined, () {
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const ContactUsScreen()));
           }),
           _tile(context, 'About Rentora', Icons.info_outline, () {
-            Navigator.push(
-                context, MaterialPageRoute(builder: (_) => const AboutScreen()));
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const AboutScreen()));
           }),
           const SizedBox(height: 8),
           const Text('Account',
@@ -1751,8 +1828,8 @@ class AboutScreen extends StatelessWidget {
                       offset: const Offset(0, 8))
                 ],
               ),
-              child:
-              const Icon(Icons.directions_car, color: Colors.white, size: 50),
+              child: const Icon(Icons.directions_car,
+                  color: Colors.white, size: 50),
             ),
             const SizedBox(height: 16),
             const Text('Rentora',
@@ -1808,61 +1885,85 @@ class AboutScreen extends StatelessWidget {
 // PRIVACY POLICY SCREEN
 // ─────────────────────────────────────────────
 
-class PrivacyPolicyScreen extends StatelessWidget {
+
+class PrivacyPolicyScreen extends StatefulWidget {
   const PrivacyPolicyScreen({super.key});
+
+  @override
+  State<PrivacyPolicyScreen> createState() => _PrivacyPolicyScreenState();
+}
+
+class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
+  late final WebViewController _controller;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageFinished: (_) => setState(() => _isLoading = false),
+          // Prevent the user from navigating away to external links
+          onNavigationRequest: (request) {
+            if (request.url.startsWith('http') ||
+                request.url.startsWith('https')) {
+              return NavigationDecision.prevent;
+            }
+            return NavigationDecision.navigate;
+          },
+        ),
+      );
+
+    _loadHtml();
+  }
+
+  Future<void> _loadHtml() async {
+    final html = await rootBundle.loadString('assets/privacy_policy.html');
+    await _controller.loadHtmlString(html, baseUrl: 'about:blank');
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Privacy Policy')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Privacy Policy',
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: RentoraTheme.primary)),
-            const SizedBox(height: 4),
-            const Text('Last updated: January 2024',
-                style: TextStyle(color: Colors.black38, fontSize: 12)),
-            const SizedBox(height: 24),
-            _section('1. Information We Collect',
-                'Rentora collects business information including company name, owner details, contact information, vehicle data, booking records, and payment information.'),
-            _section('2. How We Use Your Information',
-                'The information collected is used solely to operate and improve the Rentora service. We do not sell, trade, or share your personal or business information with third parties.'),
-            _section('3. Data Storage & Security',
-                'All data is securely stored using Google Firebase, which employs industry-standard encryption and security practices.'),
-            _section('4. Role-Based Access',
-                'Your company data is only accessible by users you authorize (Admins and Agents).'),
-            _section('5. Data Retention',
-                'Your data is retained as long as you maintain an active account on Rentora. Upon account deletion, all associated data will be permanently removed within 30 days.'),
-            _section('6. Contact',
-                'If you have any questions about this Privacy Policy, please contact us at privacy@rentora.app'),
-            const SizedBox(height: 20),
-            const Text('© 2024 Rentora. All rights reserved.',
-                style: TextStyle(color: Colors.black38, fontSize: 12)),
-          ],
+      backgroundColor: const Color(0xFFF7F9FF),
+      appBar: AppBar(
+        title: const Text(
+          'Privacy Policy',
+          style: TextStyle(
+            fontFamily: 'DM Sans',
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+          ),
         ),
+        backgroundColor: const Color(0xFF0D47A1),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
       ),
-    );
-  }
-
-  Widget _section(String title, String body) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: Stack(
         children: [
-          Text(title,
-              style: const TextStyle(
-                  fontWeight: FontWeight.w700, fontSize: 15)),
-          const SizedBox(height: 6),
-          Text(body,
-              style: const TextStyle(
-                  color: Colors.black54, fontSize: 14, height: 1.6)),
+          WebViewWidget(controller: _controller),
+          if (_isLoading)
+            const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(
+                    color: Color(0xFF2979FF),
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'Loading privacy policy…',
+                    style: TextStyle(
+                      color: Color(0xFF8898AA),
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
@@ -1895,13 +1996,14 @@ class ContactUsScreen extends StatelessWidget {
                 style: TextStyle(color: Colors.black54)),
             const SizedBox(height: 28),
             _contactCard(Icons.email_outlined, 'Email Support',
-                'support@rentora.app', 'For general inquiries and technical support'),
+                'support@rentora.app',
+                'For general inquiries and technical support'),
             const SizedBox(height: 14),
-            _contactCard(Icons.phone_outlined, 'Phone Support', '+1 (800) RENTORA',
-                'Mon–Fri, 9 AM to 6 PM'),
+            _contactCard(Icons.phone_outlined, 'Phone Support',
+                '+1 (800) RENTORA', 'Mon–Fri, 9 AM to 6 PM'),
             const SizedBox(height: 14),
-            _contactCard(Icons.language_outlined, 'Website', 'www.rentora.app',
-                'Documentation and FAQs'),
+            _contactCard(Icons.language_outlined, 'Website',
+                'www.rentora.app', 'Documentation and FAQs'),
             const SizedBox(height: 30),
             const Text('Send us a message',
                 style:
