@@ -38,8 +38,10 @@ class RentoraTheme {
       style: ElevatedButton.styleFrom(
         backgroundColor: primary,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        padding:
+        const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -57,13 +59,15 @@ class RentoraTheme {
         borderRadius: BorderRadius.circular(10),
         borderSide: const BorderSide(color: primary, width: 2),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding:
+      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     ),
     cardTheme: CardThemeData(
       color: card,
       elevation: 2,
       shadowColor: Colors.black12,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      shape:
+      RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
     ),
     fontFamily: 'Roboto',
     useMaterial3: true,
@@ -249,8 +253,10 @@ class CloudinaryService {
   static const String cloudName = 'dyl2toyfl';
   static const String uploadPreset = 'Rentora';
 
-  static Future<String> uploadImage(File file, {String folder = 'rentora/vehicles'}) async {
-    final uri = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/upload');
+  static Future<String> uploadImage(File file,
+      {String folder = 'rentora/vehicles'}) async {
+    final uri =
+    Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/upload');
 
     final request = http.MultipartRequest('POST', uri)
       ..fields['upload_preset'] = uploadPreset
@@ -294,7 +300,8 @@ class FirebaseService {
     required String phone,
     required String address,
   }) async {
-    final cred = await _auth.createUserWithEmailAndPassword(email: email, password: password);
+    final cred = await _auth.createUserWithEmailAndPassword(
+        email: email, password: password);
     final uid = cred.user!.uid;
 
     final companyRef = _db.collection('companies').doc();
@@ -337,7 +344,7 @@ class FirebaseService {
   }
 
   // ─────────────────────────────────────────────
-  // AGENTS — uses secondary Firebase app so admin stays logged in
+  // AGENTS
   // ─────────────────────────────────────────────
 
   static Future<void> createAgent({
@@ -348,7 +355,6 @@ class FirebaseService {
   }) async {
     const secondaryAppName = 'agentCreator';
 
-    // Reuse or initialise a secondary app instance
     FirebaseApp? secondaryApp;
     try {
       secondaryApp = Firebase.app(secondaryAppName);
@@ -361,15 +367,12 @@ class FirebaseService {
 
     try {
       final secondaryAuth = FirebaseAuth.instanceFor(app: secondaryApp);
-
-      // Create the agent account on the secondary app — primary session untouched
       final cred = await secondaryAuth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
       final uid = cred.user!.uid;
 
-      // Write the Firestore user document
       await _db.collection('users').doc(uid).set({
         'name': name,
         'email': email,
@@ -378,10 +381,8 @@ class FirebaseService {
         'disabled': false,
       });
 
-      // Sign out of secondary app
       await secondaryAuth.signOut();
     } finally {
-      // Always clean up the secondary app
       await secondaryApp.delete();
     }
   }
@@ -391,17 +392,25 @@ class FirebaseService {
       .where('companyId', isEqualTo: companyId)
       .where('role', isEqualTo: 'agent')
       .snapshots()
-      .map((s) => s.docs.map((d) => AppUser.fromMap(d.id, d.data())).toList());
+      .map((s) =>
+      s.docs.map((d) => AppUser.fromMap(d.id, d.data())).toList());
 
   static Future<void> updateAgentStatus(String uid, bool disabled) =>
       _db.collection('users').doc(uid).update({'disabled': disabled});
+
+  /// Deletes agent's Firestore profile doc.
+  /// Note: Firebase Auth account removal requires Admin SDK (server-side).
+  /// The Firestore doc deletion prevents login lookup, effectively deactivating the agent.
+  static Future<void> deleteAgent(String uid) =>
+      _db.collection('users').doc(uid).delete();
 
   // VEHICLES
   static Stream<List<Vehicle>> vehiclesStream(String companyId) => _db
       .collection('vehicles')
       .where('companyId', isEqualTo: companyId)
       .snapshots()
-      .map((s) => s.docs.map((d) => Vehicle.fromMap(d.id, d.data())).toList());
+      .map((s) =>
+      s.docs.map((d) => Vehicle.fromMap(d.id, d.data())).toList());
 
   static Future<void> addVehicle(Vehicle v) =>
       _db.collection('vehicles').add(v.toMap());
@@ -418,15 +427,16 @@ class FirebaseService {
       .where('companyId', isEqualTo: companyId)
       .orderBy('startDate', descending: true)
       .snapshots()
-      .map((s) => s.docs.map((d) => Booking.fromMap(d.id, d.data())).toList());
+      .map((s) =>
+      s.docs.map((d) => Booking.fromMap(d.id, d.data())).toList());
 
   static Future<void> createBooking(Booking b) async {
     await _db.collection('bookings').add(b.toMap());
     await updateVehicle(b.vehicleId, {'status': 'rented'});
   }
 
-  static Future<void> completeBooking(
-      String bookingId, String vehicleId, String? damageNotes, double? extraCharges) async {
+  static Future<void> completeBooking(String bookingId, String vehicleId,
+      String? damageNotes, double? extraCharges) async {
     await _db.collection('bookings').doc(bookingId).update({
       'status': 'completed',
       'damageNotes': damageNotes,
@@ -435,13 +445,18 @@ class FirebaseService {
     await updateVehicle(vehicleId, {'status': 'available'});
   }
 
+  /// Permanently deletes a booking record.
+  static Future<void> deleteBooking(String bookingId) =>
+      _db.collection('bookings').doc(bookingId).delete();
+
   // COMPANY
   static Future<Map<String, dynamic>?> getCompany(String companyId) async {
     final doc = await _db.collection('companies').doc(companyId).get();
     return doc.data();
   }
 
-  static Future<void> updateCompany(String companyId, Map<String, dynamic> data) =>
+  static Future<void> updateCompany(
+      String companyId, Map<String, dynamic> data) =>
       _db.collection('companies').doc(companyId).update(data);
 }
 
@@ -529,7 +544,8 @@ class VehicleCard extends StatelessWidget {
   final VoidCallback? onTap;
   final bool isAdmin;
 
-  const VehicleCard({super.key, required this.vehicle, this.onTap, this.isAdmin = false});
+  const VehicleCard(
+      {super.key, required this.vehicle, this.onTap, this.isAdmin = false});
 
   @override
   Widget build(BuildContext context) {
@@ -562,7 +578,8 @@ class VehicleCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(vehicle.name,
-                              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w700, fontSize: 13),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis),
                         ),
@@ -571,12 +588,14 @@ class VehicleCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(vehicle.model,
-                        style: const TextStyle(color: Colors.black54, fontSize: 11),
+                        style: const TextStyle(
+                            color: Colors.black54, fontSize: 11),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 2),
                     Text('🪪 ${vehicle.plate}',
-                        style: const TextStyle(color: Colors.black45, fontSize: 10),
+                        style: const TextStyle(
+                            color: Colors.black45, fontSize: 10),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis),
                     const Spacer(),
@@ -610,7 +629,8 @@ class BookingTile extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        contentPadding:
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         onTap: onTap,
         leading: Container(
           width: 44,
@@ -619,17 +639,22 @@ class BookingTile extends StatelessWidget {
             color: RentoraTheme.primary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(Icons.directions_car, color: RentoraTheme.primary),
+          child:
+          const Icon(Icons.directions_car, color: RentoraTheme.primary),
         ),
         title: Text(booking.customerName,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+            style: const TextStyle(
+                fontWeight: FontWeight.w700, fontSize: 15)),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(booking.vehicleName,
-                style: const TextStyle(color: RentoraTheme.primary, fontSize: 13)),
-            Text('$days days • Rs. ${booking.totalAmount.toStringAsFixed(0)}',
-                style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                style: const TextStyle(
+                    color: RentoraTheme.primary, fontSize: 13)),
+            Text(
+                '$days days • Rs. ${booking.totalAmount.toStringAsFixed(0)}',
+                style: const TextStyle(
+                    color: Colors.black54, fontSize: 12)),
           ],
         ),
         trailing: StatusBadge(booking.status),
