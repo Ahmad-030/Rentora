@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -398,9 +399,6 @@ class FirebaseService {
   static Future<void> updateAgentStatus(String uid, bool disabled) =>
       _db.collection('users').doc(uid).update({'disabled': disabled});
 
-  /// Deletes agent's Firestore profile doc.
-  /// Note: Firebase Auth account removal requires Admin SDK (server-side).
-  /// The Firestore doc deletion prevents login lookup, effectively deactivating the agent.
   static Future<void> deleteAgent(String uid) =>
       _db.collection('users').doc(uid).delete();
 
@@ -445,7 +443,6 @@ class FirebaseService {
     await updateVehicle(vehicleId, {'status': 'available'});
   }
 
-  /// Permanently deletes a booking record.
   static Future<void> deleteBooking(String bookingId) =>
       _db.collection('bookings').doc(bookingId).delete();
 
@@ -617,47 +614,325 @@ class VehicleCard extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────
+// BOOKING TILE
+// showAgent: true  → shows "Booked by: Agent Name • email" strip
+//            false → hides it (agent's own view)
+// ─────────────────────────────────────────────
+
 class BookingTile extends StatelessWidget {
   final Booking booking;
   final VoidCallback? onTap;
 
-  const BookingTile({super.key, required this.booking, this.onTap});
+  /// Set to true on admin screens to display which agent created this booking.
+  final bool showAgent;
+
+  const BookingTile({
+    super.key,
+    required this.booking,
+    this.onTap,
+    this.showAgent = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final days = booking.endDate.difference(booking.startDate).inDays;
+    final fmt = DateFormat('dd MMM yy');
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: ListTile(
-        contentPadding:
-        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: InkWell(
         onTap: onTap,
-        leading: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: RentoraTheme.primary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Row 1: Customer avatar + name + contact + status badge ──
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: RentoraTheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.person,
+                        color: RentoraTheme.primary, size: 22),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          booking.customerName,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w800, fontSize: 15),
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            const Icon(Icons.phone,
+                                size: 11, color: Colors.black38),
+                            const SizedBox(width: 3),
+                            Text(
+                              booking.contact,
+                              style: const TextStyle(
+                                  color: Colors.black45, fontSize: 11),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(Icons.badge,
+                                size: 11, color: Colors.black38),
+                            const SizedBox(width: 3),
+                            Expanded(
+                              child: Text(
+                                booking.cnic,
+                                style: const TextStyle(
+                                    color: Colors.black45, fontSize: 11),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  StatusBadge(booking.status),
+                ],
+              ),
+
+              const SizedBox(height: 10),
+              const Divider(height: 1, color: Color(0xFFE8EDF5)),
+              const SizedBox(height: 10),
+
+              // ── Row 2: Vehicle name + date range ──
+              Row(
+                children: [
+                  const Icon(Icons.directions_car,
+                      size: 14, color: RentoraTheme.primary),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: Text(
+                      booking.vehicleName,
+                      style: const TextStyle(
+                          color: RentoraTheme.primary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const Icon(Icons.calendar_today,
+                      size: 12, color: Colors.black38),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${fmt.format(booking.startDate)} → ${fmt.format(booking.endDate)}',
+                    style: const TextStyle(
+                        color: Colors.black54, fontSize: 11),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 8),
+
+              // ── Row 3: Total | Due/Paid chip | Duration ──
+              Row(
+                children: [
+                  const Icon(Icons.attach_money,
+                      size: 14, color: Colors.black38),
+                  const SizedBox(width: 3),
+                  Text(
+                    'Total: Rs. ${booking.totalAmount.toStringAsFixed(0)}',
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Due / Paid badge
+                  if (booking.remaining > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: RentoraTheme.error.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                            color: RentoraTheme.error.withOpacity(0.3)),
+                      ),
+                      child: Text(
+                        'Due: Rs. ${booking.remaining.toStringAsFixed(0)}',
+                        style: const TextStyle(
+                            color: RentoraTheme.error,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700),
+                      ),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: RentoraTheme.success.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                            color: RentoraTheme.success.withOpacity(0.3)),
+                      ),
+                      child: const Text(
+                        '✓ Paid',
+                        style: TextStyle(
+                            color: RentoraTheme.success,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700),
+                      ),
+                    ),
+
+                  const Spacer(),
+                  const Icon(Icons.timelapse,
+                      size: 12, color: Colors.black38),
+                  const SizedBox(width: 3),
+                  Text(
+                    '$days day${days != 1 ? 's' : ''}',
+                    style: const TextStyle(
+                        color: Colors.black45, fontSize: 11),
+                  ),
+                ],
+              ),
+
+              // ── Row 4: Booked By (admin-only) ──
+              if (showAgent && booking.createdBy.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                FutureBuilder<AppUser?>(
+                  future: FirebaseService.getUser(booking.createdBy),
+                  builder: (context, snap) {
+                    // While loading, show a small placeholder
+                    if (snap.connectionState == ConnectionState.waiting) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: Colors.indigo.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                              color: Colors.indigo.withOpacity(0.15)),
+                        ),
+                        child: Row(
+                          children: const [
+                            SizedBox(
+                              width: 10,
+                              height: 10,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 1.5,
+                                  color: Colors.indigo),
+                            ),
+                            SizedBox(width: 8),
+                            Text('Loading agent...',
+                                style: TextStyle(
+                                    fontSize: 11, color: Colors.black38)),
+                          ],
+                        ),
+                      );
+                    }
+
+                    final agent = snap.data;
+                    if (agent == null) return const SizedBox.shrink();
+
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: Colors.indigo.withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                            color: Colors.indigo.withOpacity(0.2)),
+                      ),
+                      child: Row(
+                        children: [
+                          // Agent avatar circle
+                          Container(
+                            width: 26,
+                            height: 26,
+                            decoration: BoxDecoration(
+                              color: Colors.indigo.withOpacity(0.15),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                agent.name.isNotEmpty
+                                    ? agent.name[0].toUpperCase()
+                                    : 'A',
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.indigo),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+
+                          // Label
+                          const Text(
+                            'Booked by: ',
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.black45,
+                                fontWeight: FontWeight.w500),
+                          ),
+
+                          // Agent name
+                          Text(
+                            agent.name,
+                            style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.indigo,
+                                fontWeight: FontWeight.w800),
+                          ),
+
+                          const SizedBox(width: 6),
+
+                          // Separator dot + email
+                          const Text('•',
+                              style: TextStyle(
+                                  color: Colors.black26, fontSize: 11)),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              agent.email,
+                              style: const TextStyle(
+                                  fontSize: 10, color: Colors.black38),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+
+                          // Role badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.indigo.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Text(
+                              'AGENT',
+                              style: TextStyle(
+                                  fontSize: 9,
+                                  color: Colors.indigo,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ],
           ),
-          child:
-          const Icon(Icons.directions_car, color: RentoraTheme.primary),
         ),
-        title: Text(booking.customerName,
-            style: const TextStyle(
-                fontWeight: FontWeight.w700, fontSize: 15)),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(booking.vehicleName,
-                style: const TextStyle(
-                    color: RentoraTheme.primary, fontSize: 13)),
-            Text(
-                '$days days • Rs. ${booking.totalAmount.toStringAsFixed(0)}',
-                style: const TextStyle(
-                    color: Colors.black54, fontSize: 12)),
-          ],
-        ),
-        trailing: StatusBadge(booking.status),
       ),
     );
   }

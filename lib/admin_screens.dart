@@ -206,7 +206,20 @@ class AdminHomeTab extends StatelessWidget {
                               child: Text('No bookings yet',
                                   style: TextStyle(color: Colors.black45))))
                     else
-                      ...bookings.take(5).map((b) => BookingTile(booking: b)),
+                    // showAgent: true so admin sees who booked each car
+                      ...bookings
+                          .take(5)
+                          .map((b) => BookingTile(
+                        booking: b,
+                        showAgent: true,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => BookingDetailScreen(
+                                booking: b, user: user),
+                          ),
+                        ),
+                      )),
                   ],
                 ),
               );
@@ -343,12 +356,6 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
     }
   }
 
-  // ─────────────────────────────────────────────
-  // FIXED _pickImage:
-  // Let image_picker handle permissions natively.
-  // Only show a dialog if picker throws a genuine
-  // permission error — NOT on simple user cancel.
-  // ─────────────────────────────────────────────
   Future<void> _pickImage() async {
     try {
       final picker = ImagePicker();
@@ -356,12 +363,10 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
         source: ImageSource.gallery,
         imageQuality: 70,
       );
-      // picked is null when user simply cancels — that's fine, do nothing.
       if (picked != null && mounted) {
         setState(() => _imageFile = File(picked.path));
       }
     } catch (e) {
-      // Only show settings dialog for actual permission errors.
       final msg = e.toString().toLowerCase();
       final isPermissionError = msg.contains('permission') ||
           msg.contains('denied') ||
@@ -739,6 +744,7 @@ class _BookingsTabState extends State<BookingsTab>
         return canDelete
             ? _DismissibleBookingTile(
           booking: booking,
+          isAdmin: widget.isAdmin,
           onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
@@ -747,6 +753,8 @@ class _BookingsTabState extends State<BookingsTab>
         )
             : BookingTile(
           booking: booking,
+          // Admin sees agent info on every booking tile
+          showAgent: widget.isAdmin,
           onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
@@ -765,7 +773,9 @@ class _BookingsTabState extends State<BookingsTab>
 class _DismissibleBookingTile extends StatelessWidget {
   final Booking booking;
   final VoidCallback? onTap;
-  const _DismissibleBookingTile({required this.booking, this.onTap});
+  final bool isAdmin;
+  const _DismissibleBookingTile(
+      {required this.booking, this.onTap, required this.isAdmin});
 
   Future<bool> _confirmDelete(BuildContext context) async {
     final result = await showDialog<bool>(
@@ -840,7 +850,8 @@ class _DismissibleBookingTile extends StatelessWidget {
           ],
         ),
       ),
-      child: BookingTile(booking: booking, onTap: onTap),
+      // showAgent: isAdmin so dismissed tiles also show agent when admin views them
+      child: BookingTile(booking: booking, onTap: onTap, showAgent: isAdmin),
     );
   }
 }
@@ -1130,6 +1141,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     final b = widget.booking;
     final fmt = DateFormat('dd MMM yyyy');
     final days = b.endDate.difference(b.startDate).inDays;
+    final isAdmin = widget.user.role == 'admin';
 
     return Scaffold(
       appBar: AppBar(title: const Text('Booking Details')),
@@ -1180,6 +1192,102 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     if (b.extraCharges != null)
                       _row(Icons.add_circle_outline, 'Extra Charges',
                           'Rs. ${b.extraCharges!.toStringAsFixed(0)}'),
+
+                    // ── Agent info section (admin only) ──
+                    if (isAdmin && b.createdBy.isNotEmpty) ...[
+                      const Divider(height: 24),
+                      const Text(
+                        'Booking Agent',
+                        style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            color: Colors.black54),
+                      ),
+                      const SizedBox(height: 10),
+                      FutureBuilder<AppUser?>(
+                        future: FirebaseService.getUser(b.createdBy),
+                        builder: (context, snap) {
+                          if (snap.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                                child: SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2)));
+                          }
+                          final agent = snap.data;
+                          if (agent == null) return const SizedBox.shrink();
+                          return Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.indigo.withOpacity(0.06),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                  color: Colors.indigo.withOpacity(0.2)),
+                            ),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 22,
+                                  backgroundColor:
+                                  Colors.indigo.withOpacity(0.15),
+                                  child: Text(
+                                    agent.name.isNotEmpty
+                                        ? agent.name[0].toUpperCase()
+                                        : 'A',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.indigo,
+                                        fontSize: 16),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        agent.name,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 14,
+                                            color: Colors.indigo),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        agent.email,
+                                        style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.black45),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color:
+                                    Colors.indigo.withOpacity(0.12),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Text(
+                                    'AGENT',
+                                    style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.indigo,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.5),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -1885,7 +1993,6 @@ class AboutScreen extends StatelessWidget {
 // PRIVACY POLICY SCREEN
 // ─────────────────────────────────────────────
 
-
 class PrivacyPolicyScreen extends StatefulWidget {
   const PrivacyPolicyScreen({super.key});
 
@@ -1905,7 +2012,6 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageFinished: (_) => setState(() => _isLoading = false),
-          // Prevent the user from navigating away to external links
           onNavigationRequest: (request) {
             if (request.url.startsWith('http') ||
                 request.url.startsWith('https')) {
