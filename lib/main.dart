@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'firebase_options.dart';
 import 'shared.dart';
 import 'admin_screens.dart';
 import 'agent_screens.dart';
@@ -16,8 +16,7 @@ import 'agent_screens.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
-    // Replace with your Firebase config (via google-services.json / GoogleService-Info.plist)
-    // Or use DefaultFirebaseOptions from firebase_options.dart if using FlutterFire CLI
+    options: DefaultFirebaseOptions.currentPlatform,
   );
   runApp(const RentoraApp());
 }
@@ -48,26 +47,20 @@ class AuthWrapper extends StatefulWidget {
 }
 
 class _AuthWrapperState extends State<AuthWrapper> {
-  static const _prefKey = 'permissions_requested';
-
   @override
   void initState() {
     super.initState();
-    // Show dialog after first frame so context is ready
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowPermissionDialog());
+    // Show permission dialog on every cold start
+    WidgetsBinding.instance.addPostFrameCallback((_) => _showPermissionDialog());
   }
 
-  Future<void> _maybeShowPermissionDialog() async {
-    final prefs = await SharedPreferences.getInstance();
-    final alreadyRequested = prefs.getBool(_prefKey) ?? false;
-    if (!alreadyRequested && mounted) {
-      await showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => const PermissionDialog(),
-      );
-      await prefs.setBool(_prefKey, true);
-    }
+  Future<void> _showPermissionDialog() async {
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const PermissionDialog(),
+    );
   }
 
   @override
@@ -118,7 +111,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
 }
 
 // ─────────────────────────────────────────────
-// PERMISSION DIALOG — shown once on first launch
+// PERMISSION DIALOG — shown on every cold start
 // ─────────────────────────────────────────────
 
 class PermissionDialog extends StatefulWidget {
@@ -131,19 +124,18 @@ class PermissionDialog extends StatefulWidget {
 class _PermissionDialogState extends State<PermissionDialog> {
   bool _loading = false;
 
-  // Each permission item: icon, label, description, status
   final List<Map<String, dynamic>> _permissions = [
     {
       'icon': Icons.photo_library_outlined,
-      'label': 'Photo Library',
-      'desc': 'To select vehicle images from your gallery',
+      'label': 'Gallery Access',
+      'desc': 'To select & upload vehicle photos from your gallery',
       'permission': Permission.photos,
       'granted': false,
     },
     {
       'icon': Icons.camera_alt_outlined,
       'label': 'Camera',
-      'desc': 'To take photos of vehicles directly',
+      'desc': 'To take photos of vehicles directly in-app',
       'permission': Permission.camera,
       'granted': false,
     },
@@ -151,24 +143,20 @@ class _PermissionDialogState extends State<PermissionDialog> {
       'icon': Icons.wifi_outlined,
       'label': 'Internet Access',
       'desc': 'To sync data and upload images to cloud',
-      'permission': null, // always granted on Android via manifest
+      'permission': null, // auto-granted via Android manifest
       'granted': true,
     },
   ];
 
   Future<void> _requestAll() async {
     setState(() => _loading = true);
-
     for (final item in _permissions) {
       final perm = item['permission'] as Permission?;
-      if (perm == null) continue; // internet is auto-granted
+      if (perm == null) continue;
       final status = await perm.request();
       item['granted'] = status.isGranted;
     }
-
     setState(() => _loading = false);
-
-    // Close dialog after requesting
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -193,7 +181,7 @@ class _PermissionDialogState extends State<PermissionDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header
+            // ── Header ──
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 24),
@@ -240,7 +228,7 @@ class _PermissionDialogState extends State<PermissionDialog> {
               ),
             ),
 
-            // Permission items
+            // ── Permission items ──
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
               child: Column(
@@ -270,24 +258,20 @@ class _PermissionDialogState extends State<PermissionDialog> {
                               Text(
                                 item['label'] as String,
                                 style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14,
-                                ),
+                                    fontWeight: FontWeight.w700, fontSize: 14),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 item['desc'] as String,
                                 style: const TextStyle(
-                                  color: Colors.black45,
-                                  fontSize: 12,
-                                  height: 1.4,
-                                ),
+                                    color: Colors.black45,
+                                    fontSize: 12,
+                                    height: 1.4),
                               ),
                             ],
                           ),
                         ),
                         const SizedBox(width: 8),
-                        // Required badge
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 3),
@@ -311,7 +295,7 @@ class _PermissionDialogState extends State<PermissionDialog> {
               ),
             ),
 
-            // Note
+            // ── Info note ──
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Container(
@@ -329,10 +313,7 @@ class _PermissionDialogState extends State<PermissionDialog> {
                       child: Text(
                         'You can change these anytime in your device Settings.',
                         style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.blue,
-                          height: 1.4,
-                        ),
+                            fontSize: 11, color: Colors.blue, height: 1.4),
                       ),
                     ),
                   ],
@@ -342,7 +323,7 @@ class _PermissionDialogState extends State<PermissionDialog> {
 
             const SizedBox(height: 20),
 
-            // Buttons
+            // ── Buttons ──
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
               child: Column(
@@ -380,10 +361,8 @@ class _PermissionDialogState extends State<PermissionDialog> {
                         foregroundColor: Colors.black45,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
-                      child: const Text(
-                        'Skip for now',
-                        style: TextStyle(fontSize: 13),
-                      ),
+                      child: const Text('Skip for now',
+                          style: TextStyle(fontSize: 13)),
                     ),
                   ),
                 ],
@@ -396,7 +375,9 @@ class _PermissionDialogState extends State<PermissionDialog> {
   }
 }
 
-
+// ─────────────────────────────────────────────
+// LOGIN SCREEN
+// ─────────────────────────────────────────────
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -415,18 +396,24 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _login() async {
     if (!_form.currentState!.validate()) return;
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
-      final cred = await FirebaseService.signIn(_email.text.trim(), _password.text);
+      final cred =
+      await FirebaseService.signIn(_email.text.trim(), _password.text);
       final uid = cred.user!.uid;
 
-      // Show loading snackbar
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Row(children: [
-              SizedBox(width: 16, height: 16,
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
+              SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                      color: Colors.white, strokeWidth: 2)),
               SizedBox(width: 12),
               Text('Signing you in...'),
             ]),
@@ -436,23 +423,23 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
 
-      // Fetch user profile directly
       final user = await FirebaseService.getUser(uid);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
       if (user == null) {
-        setState(() => _error = 'Account profile not found. Please contact support.');
+        setState(() =>
+        _error = 'Account profile not found. Please contact support.');
         return;
       }
 
       if (user.disabled) {
-        setState(() => _error = 'Your account has been disabled by the admin.');
+        setState(
+                () => _error = 'Your account has been disabled by the admin.');
         return;
       }
 
-      // ✅ Success toast
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(children: [
@@ -465,7 +452,6 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
 
-      // Navigate directly — no relying on AuthWrapper stream
       await Future.delayed(const Duration(milliseconds: 500));
       if (!mounted) return;
 
@@ -524,7 +510,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: RentoraTheme.primary,
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Icon(Icons.directions_car, color: Colors.white, size: 30),
+                    child: const Icon(Icons.directions_car,
+                        color: Colors.white, size: 30),
                   ),
                   const SizedBox(width: 14),
                   const Column(
@@ -536,14 +523,16 @@ class _LoginScreenState extends State<LoginScreen> {
                               fontWeight: FontWeight.w900,
                               color: RentoraTheme.primary)),
                       Text('Smart Rentals. Total Control.',
-                          style: TextStyle(fontSize: 11, color: Colors.black45)),
+                          style:
+                          TextStyle(fontSize: 11, color: Colors.black45)),
                     ],
                   ),
                 ],
               ),
               const SizedBox(height: 50),
               const Text('Welcome back',
-                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
+                  style:
+                  TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
               const SizedBox(height: 6),
               const Text('Sign in to your account',
                   style: TextStyle(color: Colors.black54)),
@@ -558,7 +547,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           labelText: 'Email address',
                           prefixIcon: Icon(Icons.email_outlined)),
                       keyboardType: TextInputType.emailAddress,
-                      validator: (v) => v!.isEmpty ? 'Enter your email' : null,
+                      validator: (v) =>
+                      v!.isEmpty ? 'Enter your email' : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
@@ -567,12 +557,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         labelText: 'Password',
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
-                          icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
-                          onPressed: () => setState(() => _obscure = !_obscure),
+                          icon: Icon(_obscure
+                              ? Icons.visibility
+                              : Icons.visibility_off),
+                          onPressed: () =>
+                              setState(() => _obscure = !_obscure),
                         ),
                       ),
                       obscureText: _obscure,
-                      validator: (v) => v!.isEmpty ? 'Enter your password' : null,
+                      validator: (v) =>
+                      v!.isEmpty ? 'Enter your password' : null,
                     ),
                     if (_error != null) ...[
                       const SizedBox(height: 12),
@@ -581,8 +575,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         decoration: BoxDecoration(
                           color: RentoraTheme.error.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(8),
-                          border:
-                          Border.all(color: RentoraTheme.error.withOpacity(0.3)),
+                          border: Border.all(
+                              color: RentoraTheme.error.withOpacity(0.3)),
                         ),
                         child: Row(
                           children: [
@@ -592,7 +586,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             Expanded(
                               child: Text(_error!,
                                   style: const TextStyle(
-                                      color: RentoraTheme.error, fontSize: 13)),
+                                      color: RentoraTheme.error,
+                                      fontSize: 13)),
                             ),
                           ],
                         ),
@@ -604,7 +599,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: ElevatedButton(
                         onPressed: _loading ? null : _login,
                         style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          padding:
+                          const EdgeInsets.symmetric(vertical: 16),
                         ),
                         child: _loading
                             ? const SizedBox(
@@ -613,7 +609,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: CircularProgressIndicator(
                                 color: Colors.white, strokeWidth: 2))
                             : const Text('Sign In',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600)),
                       ),
                     ),
                   ],
@@ -676,15 +674,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _register() async {
     if (!_form.currentState!.validate()) return;
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
-      // Show progress snackbar
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Row(children: [
-              SizedBox(width: 16, height: 16,
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
+              SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                      color: Colors.white, strokeWidth: 2)),
               SizedBox(width: 12),
               Text('Creating your business account...'),
             ]),
@@ -706,20 +709,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
-      // ✅ Success toast
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(children: [
             const Icon(Icons.check_circle, color: Colors.white),
             const SizedBox(width: 10),
-            Expanded(child: Text('Account created! Welcome, ${user.name.split(' ').first}! 🎉')),
+            Expanded(
+                child: Text(
+                    'Account created! Welcome, ${user.name.split(' ').first}! 🎉')),
           ]),
           backgroundColor: RentoraTheme.success,
           duration: const Duration(seconds: 2),
         ),
       );
 
-      // Navigate directly to Admin Dashboard
       await Future.delayed(const Duration(milliseconds: 600));
       if (!mounted) return;
 
@@ -731,10 +734,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (mounted) ScaffoldMessenger.of(context).hideCurrentSnackBar();
       setState(() {
         _error = switch (e.code) {
-          'email-already-in-use' => 'This email is already registered. Please login instead.',
-          'weak-password'        => 'Password too weak. Use at least 6 characters.',
-          'invalid-email'        => 'Please enter a valid email address.',
-          _                      => 'Registration failed: ${e.message}',
+          'email-already-in-use' =>
+          'This email is already registered. Please login instead.',
+          'weak-password' =>
+          'Password too weak. Use at least 6 characters.',
+          'invalid-email' => 'Please enter a valid email address.',
+          _ => 'Registration failed: ${e.message}',
         };
       });
     } catch (e) {
@@ -756,12 +761,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
+              // Header banner
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
+                  gradient: const LinearGradient(
                     colors: [RentoraTheme.primary, RentoraTheme.accent],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -779,13 +784,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             fontSize: 20,
                             fontWeight: FontWeight.w800)),
                     Text('Register to manage your rental fleet',
-                        style: TextStyle(color: Colors.white70, fontSize: 13)),
+                        style:
+                        TextStyle(color: Colors.white70, fontSize: 13)),
                   ],
                 ),
               ),
               const SizedBox(height: 28),
               const Text('Business Information',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                  style:
+                  TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
               const SizedBox(height: 14),
               _field(_company, 'Company Name', Icons.business_outlined),
               const SizedBox(height: 14),
@@ -802,7 +809,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 24),
               const Text('Owner & Login Details',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                  style:
+                  TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
               const SizedBox(height: 14),
               _field(_owner, 'Owner Full Name', Icons.person_outlined),
               const SizedBox(height: 14),
@@ -815,7 +823,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   labelText: 'Password',
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
-                    icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
+                    icon: Icon(
+                        _obscure ? Icons.visibility : Icons.visibility_off),
                     onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                 ),
@@ -830,11 +839,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: BoxDecoration(
                     color: RentoraTheme.error.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: RentoraTheme.error.withOpacity(0.3)),
+                    border: Border.all(
+                        color: RentoraTheme.error.withOpacity(0.3)),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline, color: RentoraTheme.error, size: 18),
+                      const Icon(Icons.error_outline,
+                          color: RentoraTheme.error, size: 18),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(_error!,
@@ -860,7 +871,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: CircularProgressIndicator(
                           color: Colors.white, strokeWidth: 2))
                       : const Text('Create Business Account',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600)),
                 ),
               ),
               const SizedBox(height: 12),

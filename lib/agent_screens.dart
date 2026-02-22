@@ -158,6 +158,7 @@ class AgentSettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // Profile card
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),

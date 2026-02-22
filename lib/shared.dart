@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
@@ -245,12 +246,9 @@ class Booking {
 // ─────────────────────────────────────────────
 
 class CloudinaryService {
-  // ⚠️ Replace these with your actual Cloudinary credentials
-  // Found at: cloudinary.com → Dashboard
-  static const String cloudName = 'dyl2toyfl';       // e.g. 'dxyz123abc'
+  static const String cloudName = 'dyl2toyfl';
   static const String uploadPreset = 'Rentora';
-  /// Uploads [file] to Cloudinary under the given [folder].
-  /// Returns the secure URL of the uploaded image.
+
   static Future<String> uploadImage(File file, {String folder = 'rentora/vehicles'}) async {
     final uri = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/upload');
 
@@ -264,7 +262,6 @@ class CloudinaryService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
-      // secure_url is the full HTTPS image URL — stored in Firestore
       return data['secure_url'] as String;
     } else {
       throw Exception('Cloudinary upload failed: ${response.body}');
@@ -300,7 +297,6 @@ class FirebaseService {
     final cred = await _auth.createUserWithEmailAndPassword(email: email, password: password);
     final uid = cred.user!.uid;
 
-    // Create company
     final companyRef = _db.collection('companies').doc();
     await companyRef.set({
       'name': companyName,
@@ -311,7 +307,6 @@ class FirebaseService {
       'createdAt': FieldValue.serverTimestamp(),
     });
 
-    // Create user record
     final user = AppUser(
       uid: uid,
       name: ownerName,
@@ -330,7 +325,6 @@ class FirebaseService {
       if (!doc.exists) return null;
       return AppUser.fromMap(uid, doc.data()!);
     } catch (e) {
-      // Retry once after short delay (handles token propagation delay after login)
       await Future.delayed(const Duration(milliseconds: 800));
       try {
         final doc = await _db.collection('users').doc(uid).get();
@@ -342,29 +336,54 @@ class FirebaseService {
     }
   }
 
-  // AGENTS
+  // ─────────────────────────────────────────────
+  // AGENTS — uses secondary Firebase app so admin stays logged in
+  // ─────────────────────────────────────────────
+
   static Future<void> createAgent({
     required String name,
     required String email,
     required String password,
     required String companyId,
   }) async {
-    // Use secondary app or admin SDK approach; here we use Firebase Auth REST
-    // For simplicity in a real app, use Firebase Admin SDK via Cloud Functions
-    // But client-side: create user then sign back in as admin
-    final adminUser = _auth.currentUser;
-    final cred = await _auth.createUserWithEmailAndPassword(email: email, password: password);
-    final uid = cred.user!.uid;
-    await _db.collection('users').doc(uid).set({
-      'name': name,
-      'email': email,
-      'role': 'agent',
-      'companyId': companyId,
-      'disabled': false,
-    });
-    // Re-sign in as admin (admin gets signed out by createUser on same app instance)
-    // In production, use Cloud Functions for agent creation
-    // This is a known Firebase limitation on client SDK
+    const secondaryAppName = 'agentCreator';
+
+    // Reuse or initialise a secondary app instance
+    FirebaseApp? secondaryApp;
+    try {
+      secondaryApp = Firebase.app(secondaryAppName);
+    } catch (_) {
+      secondaryApp = await Firebase.initializeApp(
+        name: secondaryAppName,
+        options: Firebase.app().options,
+      );
+    }
+
+    try {
+      final secondaryAuth = FirebaseAuth.instanceFor(app: secondaryApp);
+
+      // Create the agent account on the secondary app — primary session untouched
+      final cred = await secondaryAuth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      final uid = cred.user!.uid;
+
+      // Write the Firestore user document
+      await _db.collection('users').doc(uid).set({
+        'name': name,
+        'email': email,
+        'role': 'agent',
+        'companyId': companyId,
+        'disabled': false,
+      });
+
+      // Sign out of secondary app
+      await secondaryAuth.signOut();
+    } finally {
+      // Always clean up the secondary app
+      await secondaryApp.delete();
+    }
   }
 
   static Stream<List<AppUser>> agentsStream(String companyId) => _db
@@ -474,29 +493,30 @@ class DashCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, color: color, size: 20),
-                ),
-                const Spacer(),
-              ],
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(7),
+              ),
+              child: Icon(icon, color: color, size: 16),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(value,
                 style: const TextStyle(
-                    fontSize: 26, fontWeight: FontWeight.w800, color: RentoraTheme.primary)),
-            const SizedBox(height: 4),
-            Text(title, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: RentoraTheme.primary)),
+            const SizedBox(height: 2),
+            Text(title,
+                style: const TextStyle(fontSize: 11, color: Colors.black54),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1),
           ],
         ),
       ),
@@ -520,43 +540,55 @@ class VehicleCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (vehicle.imageUrl.isNotEmpty)
-              Image.network(vehicle.imageUrl,
-                  height: 130, width: double.infinity, fit: BoxFit.cover)
-            else
-              Container(
-                height: 130,
+            SizedBox(
+              height: 100,
+              width: double.infinity,
+              child: vehicle.imageUrl.isNotEmpty
+                  ? Image.network(vehicle.imageUrl, fit: BoxFit.cover)
+                  : Container(
                 color: RentoraTheme.primary.withOpacity(0.1),
                 child: const Center(
-                    child: Icon(Icons.directions_car, size: 50, color: RentoraTheme.primary)),
+                    child: Icon(Icons.directions_car,
+                        size: 40, color: RentoraTheme.primary)),
               ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(vehicle.name,
-                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-                      ),
-                      StatusBadge(vehicle.status),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(vehicle.model,
-                      style: const TextStyle(color: Colors.black54, fontSize: 13)),
-                  const SizedBox(height: 4),
-                  Text('🪪 ${vehicle.plate}',
-                      style: const TextStyle(color: Colors.black45, fontSize: 12)),
-                  const SizedBox(height: 6),
-                  Text('Rs. ${vehicle.pricePerDay.toStringAsFixed(0)}/day',
-                      style: const TextStyle(
-                          color: RentoraTheme.primary,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14)),
-                ],
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(vehicle.name,
+                              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis),
+                        ),
+                        StatusBadge(vehicle.status),
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    Text(vehicle.model,
+                        style: const TextStyle(color: Colors.black54, fontSize: 11),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 2),
+                    Text('🪪 ${vehicle.plate}',
+                        style: const TextStyle(color: Colors.black45, fontSize: 10),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
+                    const Spacer(),
+                    Text('Rs. ${vehicle.pricePerDay.toStringAsFixed(0)}/day',
+                        style: const TextStyle(
+                            color: RentoraTheme.primary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
+                  ],
+                ),
               ),
             ),
           ],
@@ -605,4 +637,3 @@ class BookingTile extends StatelessWidget {
     );
   }
 }
-

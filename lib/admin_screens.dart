@@ -1,6 +1,7 @@
 // admin_screens.dart — Admin Dashboard, Vehicles, Bookings, Agents, Settings
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
@@ -1033,6 +1034,9 @@ class AgentsTab extends StatelessWidget {
 // ─────────────────────────────────────────────
 // ADD AGENT SCREEN
 // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// ADD AGENT SCREEN  (updated — no sign-out warning)
+// ─────────────────────────────────────────────
 
 class AddAgentScreen extends StatefulWidget {
   final AppUser user;
@@ -1060,15 +1064,22 @@ class _AddAgentScreenState extends State<AddAgentScreen> {
         password: _password.text,
         companyId: widget.user.companyId,
       );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Agent created. Please re-login as admin.')));
-        Navigator.pop(context);
-      }
+      if (!mounted) return;
+      // Show credentials dialog — admin stays logged in
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => _CredentialsDialog(
+          name: _name.text.trim(),
+          email: _email.text.trim(),
+          password: _password.text,
+        ),
+      );
+      if (mounted) Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -1083,38 +1094,17 @@ class _AddAgentScreenState extends State<AddAgentScreen> {
           child: Column(
             children: [
               const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.amber.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.amber.withOpacity(0.4)),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.info_outline, color: Colors.amber),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Note: Due to Firebase limitations, creating an agent will sign you out. Please re-login as admin after.',
-                        style: TextStyle(fontSize: 12, color: Colors.black87),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
               TextFormField(
                 controller: _name,
-                decoration:
-                const InputDecoration(labelText: 'Agent Full Name', prefixIcon: Icon(Icons.person)),
+                decoration: const InputDecoration(
+                    labelText: 'Agent Full Name', prefixIcon: Icon(Icons.person)),
                 validator: (v) => v!.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 14),
               TextFormField(
                 controller: _email,
-                decoration:
-                const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email)),
+                decoration: const InputDecoration(
+                    labelText: 'Email', prefixIcon: Icon(Icons.email)),
                 keyboardType: TextInputType.emailAddress,
                 validator: (v) => v!.isEmpty ? 'Required' : null,
               ),
@@ -1152,6 +1142,166 @@ class _AddAgentScreenState extends State<AddAgentScreen> {
     );
   }
 }
+
+// ─────────────────────────────────────────────
+// CREDENTIALS DIALOG — shown after agent is created
+// ─────────────────────────────────────────────
+
+class _CredentialsDialog extends StatefulWidget {
+  final String name;
+  final String email;
+  final String password;
+  const _CredentialsDialog({
+    required this.name,
+    required this.email,
+    required this.password,
+  });
+
+  @override
+  State<_CredentialsDialog> createState() => _CredentialsDialogState();
+}
+
+class _CredentialsDialogState extends State<_CredentialsDialog> {
+  bool _obscurePassword = true;
+
+  void _copy(String text, String label) {
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('$label copied!')));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: RentoraTheme.success.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.check_circle, color: RentoraTheme.success, size: 22),
+          ),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Text('Agent Created!',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Share these credentials with ${widget.name}:',
+              style: const TextStyle(color: Colors.black54, fontSize: 13)),
+          const SizedBox(height: 16),
+          _credRow(
+            label: 'Email',
+            value: widget.email,
+            icon: Icons.email_outlined,
+            onCopy: () => _copy(widget.email, 'Email'),
+          ),
+          const SizedBox(height: 10),
+          _credRow(
+            label: 'Password',
+            value: _obscurePassword
+                ? '•' * widget.password.length
+                : widget.password,
+            icon: Icons.lock_outline,
+            onCopy: () => _copy(widget.password, 'Password'),
+            trailing: IconButton(
+              icon: Icon(
+                _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                size: 18,
+                color: RentoraTheme.primary,
+              ),
+              onPressed: () =>
+                  setState(() => _obscurePassword = !_obscurePassword),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.blue.withOpacity(0.07),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.blue.withOpacity(0.2)),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.info_outline, size: 16, color: Colors.blue),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Save these now — the password cannot be retrieved later.',
+                    style: TextStyle(fontSize: 11, color: Colors.blue, height: 1.4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Done'),
+        ),
+      ],
+    );
+  }
+
+  Widget _credRow({
+    required String label,
+    required String value,
+    required IconData icon,
+    required VoidCallback onCopy,
+    Widget? trailing,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: RentoraTheme.bg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFBBCCEE)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: RentoraTheme.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: const TextStyle(
+                        fontSize: 10,
+                        color: Colors.black45,
+                        fontWeight: FontWeight.w600)),
+                Text(value,
+                    style: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+          if (trailing != null) trailing,
+          IconButton(
+            icon: const Icon(Icons.copy, size: 16, color: RentoraTheme.primary),
+            onPressed: onCopy,
+            tooltip: 'Copy $label',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+
+
 
 // ─────────────────────────────────────────────
 // ADMIN SETTINGS SCREEN
