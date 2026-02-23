@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:439927785677:android:e5e3789693b6e5e643c184",
+        "mobilesdk_app_id": "1:439927785677:android:a686c47e1ddaf9c643c184",
         "android_client_info": {
-          "package_name": "com.example.rentora"
+          "package_name": "com.ahmbuilds.rentora"
         }
       },
       "oauth_client": [],

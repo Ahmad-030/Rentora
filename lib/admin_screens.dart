@@ -1948,8 +1948,6 @@ class AboutScreen extends StatelessWidget {
             const Text('Smart Rentals. Total Control.',
                 style: TextStyle(color: Colors.black54, fontSize: 14)),
             const SizedBox(height: 6),
-            const Text('Version 1.0.0',
-                style: TextStyle(color: Colors.black38, fontSize: 12)),
             const SizedBox(height: 30),
             _section('What is Rentora?',
                 'Rentora is a professional car rental management application built for small and medium businesses. It helps you manage your fleet, bookings, payments, and agents all in one place.'),
@@ -2076,10 +2074,6 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
   }
 }
 
-// ─────────────────────────────────────────────
-// CONTACT US SCREEN
-// ─────────────────────────────────────────────
-
 class ContactUsScreen extends StatelessWidget {
   const ContactUsScreen({super.key});
 
@@ -2092,96 +2086,138 @@ class ContactUsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Get in Touch',
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: RentoraTheme.primary)),
-            const SizedBox(height: 8),
-            const Text("We're here to help. Reach out to us anytime.",
-                style: TextStyle(color: Colors.black54)),
+            // Header
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [RentoraTheme.primary, RentoraTheme.accent],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Icon(Icons.contact_support_outlined,
+                      color: Colors.white, size: 36),
+                  SizedBox(height: 12),
+                  Text(
+                    'Get in Touch',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    "We're here to help. Reach out to us anytime.",
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 28),
-            _contactCard(Icons.email_outlined, 'Email Support',
-                'support@rentora.app',
-                'For general inquiries and technical support'),
-            const SizedBox(height: 14),
-            _contactCard(Icons.phone_outlined, 'Phone Support',
-                '+1 (800) RENTORA', 'Mon–Fri, 9 AM to 6 PM'),
-            const SizedBox(height: 14),
-            _contactCard(Icons.language_outlined, 'Website',
-                'www.rentora.app', 'Documentation and FAQs'),
-            const SizedBox(height: 30),
-            const Text('Send us a message',
-                style:
-                TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-            const SizedBox(height: 14),
-            const TextField(
-              decoration: InputDecoration(
-                  labelText: 'Your Name',
-                  prefixIcon: Icon(Icons.person_outline)),
-            ),
-            const SizedBox(height: 12),
-            const TextField(
-              decoration: InputDecoration(
-                  labelText: 'Your Email',
-                  prefixIcon: Icon(Icons.email_outlined)),
-              keyboardType: TextInputType.emailAddress,
-            ),
-            const SizedBox(height: 12),
-            const TextField(
-              decoration: InputDecoration(
-                  labelText: 'Message',
-                  prefixIcon: Icon(Icons.message_outlined)),
-              maxLines: 4,
+
+            // Company name
+            const Text(
+              'PATRICIA IW ROSSELL LLC',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 18,
+                color: RentoraTheme.primary,
+                letterSpacing: 0.5,
+              ),
             ),
             const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.send),
-                label: const Text('Send Message'),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text(
-                          "Message sent! We'll respond within 24 hours.")));
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _contactCard(
-      IconData icon, String title, String value, String subtitle) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: RentoraTheme.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
+            // Email card
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: RentoraTheme.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.email_outlined,
+                          color: RentoraTheme.primary, size: 22),
+                    ),
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Email',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: Colors.black54,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'bagay810@gmail.com',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                              color: RentoraTheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.copy,
+                          color: RentoraTheme.primary, size: 20),
+                      tooltip: 'Copy email',
+                      onPressed: () {
+                        Clipboard.setData(
+                            const ClipboardData(text: 'bagay810@gmail.com'));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Email copied to clipboard!'),
+                            backgroundColor: RentoraTheme.success,
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
-              child: Icon(icon, color: RentoraTheme.primary),
             ),
-            const SizedBox(width: 14),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w700, fontSize: 14)),
-                Text(value,
-                    style: const TextStyle(
-                        color: RentoraTheme.primary, fontSize: 13)),
-                Text(subtitle,
-                    style: const TextStyle(
-                        color: Colors.black45, fontSize: 11)),
-              ],
+
+            const SizedBox(height: 16),
+
+            // Response time info
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.06),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.blue.withOpacity(0.2)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.schedule_outlined, size: 18, color: Colors.blue),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'We typically respond within 5 business days.',
+                      style: TextStyle(
+                          fontSize: 13, color: Colors.blue, height: 1.4),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

@@ -52,7 +52,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyCjWjOeuzwuY944BLvsnqDRGfLmic0uHiQ',
-    appId: '1:439927785677:android:e5e3789693b6e5e643c184',
+    appId: '1:439927785677:android:a686c47e1ddaf9c643c184',
     messagingSenderId: '439927785677',
     projectId: 'rentora-184ff',
     storageBucket: 'rentora-184ff.firebasestorage.app',
@@ -85,4 +85,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'rentora-184ff.firebasestorage.app',
     measurementId: 'G-CEKM1XR3SH',
   );
+
 }

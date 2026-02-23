@@ -43,6 +43,29 @@ class RentoraApp extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
+// SESSION HELPER — saves & loads uid via SharedPreferences
+// ─────────────────────────────────────────────
+
+class SessionManager {
+  static const _keyUid = 'session_uid';
+
+  static Future<void> saveSession(String uid) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyUid, uid);
+  }
+
+  static Future<String?> getSavedUid() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyUid);
+  }
+
+  static Future<void> clearSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyUid);
+  }
+}
+
+// ─────────────────────────────────────────────
 // SPLASH SCREEN — Advanced Animated
 // ─────────────────────────────────────────────
 
@@ -227,15 +250,11 @@ class _SplashScreenState extends State<SplashScreen>
             ),
             child: Stack(
               children: [
-                // Floating particle circles
                 ..._buildParticles(size),
-
-                // Main content
                 Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Animated ring + logo
                       SlideTransition(
                         position: _logoSlide,
                         child: FadeTransition(
@@ -245,7 +264,6 @@ class _SplashScreenState extends State<SplashScreen>
                             child: Stack(
                               alignment: Alignment.center,
                               children: [
-                                // Outer pulsing ring
                                 ScaleTransition(
                                   scale: _ringScale,
                                   child: Container(
@@ -261,7 +279,6 @@ class _SplashScreenState extends State<SplashScreen>
                                     ),
                                   ),
                                 ),
-                                // Middle ring
                                 Container(
                                   width: 110,
                                   height: 110,
@@ -274,7 +291,6 @@ class _SplashScreenState extends State<SplashScreen>
                                     ),
                                   ),
                                 ),
-                                // Logo box
                                 Container(
                                   width: 84,
                                   height: 84,
@@ -307,10 +323,7 @@ class _SplashScreenState extends State<SplashScreen>
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 32),
-
-                      // App name + tagline
                       SlideTransition(
                         position: _textSlide,
                         child: FadeTransition(
@@ -346,8 +359,6 @@ class _SplashScreenState extends State<SplashScreen>
                     ],
                   ),
                 ),
-
-                // Bottom loading indicator
                 Positioned(
                   bottom: 60,
                   left: 0,
@@ -427,7 +438,25 @@ class _SplashScreenState extends State<SplashScreen>
 }
 
 // ─────────────────────────────────────────────
-// ONBOARDING SCREEN — shown only once
+// LOGOUT HELPER — always call this instead of FirebaseAuth.signOut() directly
+// Usage: await AppLogout.logout(context);
+// ─────────────────────────────────────────────
+
+class AppLogout {
+  static Future<void> logout(BuildContext context) async {
+    // 1. Clear SharedPreferences session FIRST — prevents auto re-login
+    await SessionManager.clearSession();
+    // 2. Sign out of Firebase
+    await FirebaseAuth.instance.signOut();
+    // 3. Navigate to login, clearing the entire back stack
+    if (context.mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+            (route) => false,
+      );
+    }
+  }
+}
 // ─────────────────────────────────────────────
 
 class OnboardingScreen extends StatefulWidget {
@@ -542,7 +571,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
         child: SafeArea(
           child: Column(
             children: [
-              // Skip button
               Align(
                 alignment: Alignment.topRight,
                 child: TextButton(
@@ -556,8 +584,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   ),
                 ),
               ),
-
-              // PageView
               Expanded(
                 child: PageView.builder(
                   controller: _pageController,
@@ -576,7 +602,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                // Illustration
                                 Container(
                                   width: 180,
                                   height: 180,
@@ -635,13 +660,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   },
                 ),
               ),
-
-              // Page dots + button
               Padding(
                 padding: const EdgeInsets.fromLTRB(32, 0, 32, 40),
                 child: Column(
                   children: [
-                    // Dots
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(
@@ -719,7 +741,7 @@ class _OnboardingPage {
 }
 
 // ─────────────────────────────────────────────
-// PERMISSION SCREEN — shown only once
+// PERMISSION SCREEN
 // ─────────────────────────────────────────────
 
 class PermissionScreen extends StatefulWidget {
@@ -831,7 +853,6 @@ class _PermissionScreenState extends State<PermissionScreen>
               position: _slideAnim,
               child: Column(
                 children: [
-                  // Header
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.fromLTRB(24, 40, 24, 40),
@@ -873,7 +894,6 @@ class _PermissionScreenState extends State<PermissionScreen>
                       ],
                     ),
                   ),
-
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.all(24),
@@ -885,8 +905,7 @@ class _PermissionScreenState extends State<PermissionScreen>
                             final item = entry.value;
                             return TweenAnimationBuilder<double>(
                               tween: Tween(begin: 0, end: 1),
-                              duration:
-                              Duration(milliseconds: 400 + i * 150),
+                              duration: Duration(milliseconds: 400 + i * 150),
                               curve: Curves.easeOut,
                               builder: (_, val, child) => Opacity(
                                 opacity: val,
@@ -923,8 +942,7 @@ class _PermissionScreenState extends State<PermissionScreen>
                                           begin: Alignment.topLeft,
                                           end: Alignment.bottomRight,
                                         ),
-                                        borderRadius:
-                                        BorderRadius.circular(14),
+                                        borderRadius: BorderRadius.circular(14),
                                       ),
                                       child: Icon(
                                         item['icon'] as IconData,
@@ -977,7 +995,6 @@ class _PermissionScreenState extends State<PermissionScreen>
                               ),
                             );
                           }),
-
                           const SizedBox(height: 8),
                           Container(
                             padding: const EdgeInsets.all(14),
@@ -1008,8 +1025,6 @@ class _PermissionScreenState extends State<PermissionScreen>
                       ),
                     ),
                   ),
-
-                  // Buttons
                   Padding(
                     padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
                     child: Column(
@@ -1019,8 +1034,7 @@ class _PermissionScreenState extends State<PermissionScreen>
                           child: ElevatedButton(
                             onPressed: _loading ? null : _requestAll,
                             style: ElevatedButton.styleFrom(
-                              padding:
-                              const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14)),
                             ),
@@ -1034,8 +1048,7 @@ class _PermissionScreenState extends State<PermissionScreen>
                                 : const Text(
                               'Allow Permissions',
                               style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700),
+                                  fontSize: 16, fontWeight: FontWeight.w700),
                             ),
                           ),
                         ),
@@ -1046,8 +1059,7 @@ class _PermissionScreenState extends State<PermissionScreen>
                             onPressed: _loading ? null : _skip,
                             style: TextButton.styleFrom(
                               foregroundColor: Colors.black45,
-                              padding:
-                              const EdgeInsets.symmetric(vertical: 12),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
                             child: const Text('Skip for now',
                                 style: TextStyle(fontSize: 14)),
@@ -1067,14 +1079,89 @@ class _PermissionScreenState extends State<PermissionScreen>
 }
 
 // ─────────────────────────────────────────────
-// AUTH WRAPPER — listens to Firebase auth state
+// AUTH WRAPPER — checks saved session first, then Firebase auth state
 // ─────────────────────────────────────────────
 
-class AuthWrapper extends StatelessWidget {
+class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
 
   @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  AppUser? _cachedUser;
+  bool _loading = true;
+  bool _sessionCleared = false; // prevents re-login loop after logout
+
+  @override
+  void initState() {
+    super.initState();
+    _tryRestoreSession();
+  }
+
+  Future<void> _tryRestoreSession() async {
+    // Check if Firebase has a currently signed-in user
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+
+    if (firebaseUser != null) {
+      final user = await FirebaseService.getUser(firebaseUser.uid);
+      if (user != null && !user.disabled) {
+        // Valid active session — restore it
+        await SessionManager.saveSession(firebaseUser.uid);
+        if (mounted) setState(() { _cachedUser = user; _loading = false; });
+        return;
+      } else {
+        // Firebase user exists but is disabled or missing — full sign-out
+        await SessionManager.clearSession();
+        await FirebaseAuth.instance.signOut();
+        _sessionCleared = true;
+        if (mounted) setState(() => _loading = false);
+        return;
+      }
+    }
+
+    // No Firebase user — check SharedPreferences for saved uid
+    final savedUid = await SessionManager.getSavedUid();
+    if (savedUid != null) {
+      final user = await FirebaseService.getUser(savedUid);
+      if (user != null && !user.disabled) {
+        // Valid saved session — restore without requiring login
+        if (mounted) setState(() { _cachedUser = user; _loading = false; });
+        return;
+      } else {
+        // Stale or disabled session — clear and go to login
+        await SessionManager.clearSession();
+      }
+    }
+
+    _sessionCleared = true;
+    if (mounted) setState(() => _loading = false);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // Restored session — go straight to dashboard
+    if (_cachedUser != null) {
+      if (_cachedUser!.role == 'admin') {
+        return AdminDashboard(user: _cachedUser!);
+      } else {
+        return AgentDashboard(user: _cachedUser!);
+      }
+    }
+
+    // Session was cleared (logout) — go directly to login, don't listen to stream
+    if (_sessionCleared) {
+      return const LoginScreen();
+    }
+
+    // Fallback: listen to Firebase auth state
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snap) {
@@ -1141,10 +1228,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _login() async {
     if (!_form.currentState!.validate()) return;
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    setState(() { _loading = true; _error = null; });
     try {
       final cred =
       await FirebaseService.signIn(_email.text.trim(), _password.text);
@@ -1180,10 +1264,12 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       if (user.disabled) {
-        setState(
-                () => _error = 'Your account has been disabled by the admin.');
+        setState(() => _error = 'Your account has been disabled by the admin.');
         return;
       }
+
+      // ── Save session so user stays logged in next launch ──
+      await SessionManager.saveSession(uid);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1245,7 +1331,6 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 30),
-              // ── Logo + App name ──
               Row(
                 children: [
                   Container(
@@ -1272,36 +1357,28 @@ class _LoginScreenState extends State<LoginScreen> {
                               fontWeight: FontWeight.w900,
                               color: RentoraTheme.primary)),
                       Text('Smart Rentals. Total Control.',
-                          style:
-                          TextStyle(fontSize: 11, color: Colors.black45)),
+                          style: TextStyle(fontSize: 11, color: Colors.black45)),
                     ],
                   ),
                 ],
               ),
               const SizedBox(height: 50),
-
               const Text('Welcome back',
                   style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800)),
               const SizedBox(height: 6),
-              // ── UPDATED: clarify both owners and agents can login ──
               const Text('Owners & agents can sign in here',
                   style: TextStyle(color: Colors.black54)),
               const SizedBox(height: 16),
-
-              // ── Info banner for agents ──
               Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
                   color: RentoraTheme.primary.withOpacity(0.06),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                      color: RentoraTheme.primary.withOpacity(0.2)),
+                  border: Border.all(color: RentoraTheme.primary.withOpacity(0.2)),
                 ),
                 child: Row(
                   children: const [
-                    Icon(Icons.info_outline,
-                        size: 16, color: RentoraTheme.primary),
+                    Icon(Icons.info_outline, size: 16, color: RentoraTheme.primary),
                     SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -1317,8 +1394,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-
-              // ── Form ──
               Form(
                 key: _form,
                 child: Column(
@@ -1329,8 +1404,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           labelText: 'Email address',
                           prefixIcon: Icon(Icons.email_outlined)),
                       keyboardType: TextInputType.emailAddress,
-                      validator: (v) =>
-                      v!.isEmpty ? 'Enter your email' : null,
+                      validator: (v) => v!.isEmpty ? 'Enter your email' : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
@@ -1339,18 +1413,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         labelText: 'Password',
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
-                          icon: Icon(_obscure
-                              ? Icons.visibility
-                              : Icons.visibility_off),
-                          onPressed: () =>
-                              setState(() => _obscure = !_obscure),
+                          icon: Icon(
+                              _obscure ? Icons.visibility : Icons.visibility_off),
+                          onPressed: () => setState(() => _obscure = !_obscure),
                         ),
                       ),
                       obscureText: _obscure,
-                      validator: (v) =>
-                      v!.isEmpty ? 'Enter your password' : null,
+                      validator: (v) => v!.isEmpty ? 'Enter your password' : null,
                     ),
-                    // Forgot password link
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
@@ -1389,8 +1459,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             Expanded(
                               child: Text(_error!,
                                   style: const TextStyle(
-                                      color: RentoraTheme.error,
-                                      fontSize: 13)),
+                                      color: RentoraTheme.error, fontSize: 13)),
                             ),
                           ],
                         ),
@@ -1412,8 +1481,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 color: Colors.white, strokeWidth: 2))
                             : const Text('Sign In',
                             style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600)),
+                                fontSize: 16, fontWeight: FontWeight.w600)),
                       ),
                     ),
                   ],
@@ -1422,8 +1490,6 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 32),
               const Divider(),
               const SizedBox(height: 20),
-
-              // ── UPDATED: bottom section for new business registration ──
               const Text("Don't have a business account yet?",
                   style: TextStyle(
                       color: Colors.black54,
@@ -1486,10 +1552,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _register() async {
     if (!_form.currentState!.validate()) return;
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    setState(() { _loading = true; _error = null; });
     try {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1520,6 +1583,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+      // ── Save session on registration too ──
+      await SessionManager.saveSession(user.uid);
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(children: [

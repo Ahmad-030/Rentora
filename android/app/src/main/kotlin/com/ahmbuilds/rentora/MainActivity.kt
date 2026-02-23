@@ -1,4 +1,4 @@
-package com.example.rentora
+package com.ahmbuilds.rentora
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -21,7 +21,6 @@
       --white:  #FFFFFF;
       --rule:   rgba(13,71,161,.09);
       --r:      14px;
-      /* Mobile-first safe area support */
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bot: env(safe-area-inset-bottom, 0px);
       --safe-l:   env(safe-area-inset-left, 0px);
@@ -38,7 +37,6 @@
       font-size: 15px;
       line-height: 1.75;
       overflow-x: hidden;
-      /* Prevent iOS bounce causing layout jumps */
       -webkit-overflow-scrolling: touch;
     }
 
@@ -123,7 +121,6 @@
     .toc-inner {
       display: flex; overflow-x: auto; scrollbar-width: none;
       padding: 0 calc(4px + var(--safe-l));
-      /* Smooth momentum scrolling on iOS */
       -webkit-overflow-scrolling: touch;
       scroll-snap-type: x proximity;
     }
@@ -133,13 +130,12 @@
       color: var(--faint); text-decoration: none; white-space: nowrap;
       border-bottom: 2px solid transparent;
       transition: color .2s, border-color .2s; letter-spacing: .1px;
-      /* Better touch target */
       min-height: 44px; display: flex; align-items: center;
       scroll-snap-align: start;
     }
     .toc-link:hover, .toc-link.active { color: var(--blue); border-bottom-color: var(--bright); }
 
-    /* ── PAGE LAYOUT — single column mobile ── */
+    /* ── PAGE LAYOUT ── */
     .layout {
       max-width: 100%;
       padding: 28px calc(16px + var(--safe-l)) calc(60px + var(--safe-bot)) calc(16px + var(--safe-r));
@@ -205,7 +201,7 @@
       border-radius: var(--r); padding: 16px 18px; margin: 14px 0;
     }
 
-    /* data cards — 2-col grid on mobile */
+    /* data cards */
     .card-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -215,7 +211,6 @@
       background: var(--white); border: 1px solid var(--rule);
       border-radius: 12px; padding: 14px 12px;
       position: relative; overflow: hidden;
-      /* Active state for touch */
       transition: box-shadow .2s, transform .15s;
       -webkit-tap-highlight-color: transparent;
     }
@@ -241,7 +236,7 @@
     }
     .lico svg { width: 11px; height: 11px; fill: var(--blue); }
 
-    /* table — horizontal scroll on mobile */
+    /* table */
     .ptable-wrap { overflow-x: auto; margin: 16px 0; border-radius: var(--r); }
     .ptable {
       width: 100%; min-width: 380px; border-collapse: collapse;
@@ -259,7 +254,7 @@
     .ptable tr:last-child td { border-bottom: none; }
     .ptable tr:nth-child(even) td { background: var(--pale); }
 
-    /* rights pills — 3-col on phones */
+    /* rights pills */
     .rights {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -279,7 +274,6 @@
     .crow {
       display: flex; align-items: center; gap: 12px;
       padding: 11px 0; border-bottom: 1px solid var(--rule);
-      /* Make rows tappable */
       min-height: 48px;
     }
     .crow:last-child { border-bottom: none; padding-bottom: 0; }
@@ -294,7 +288,7 @@
     /* divider */
     .divider { height: 1px; background: var(--rule); margin: 24px 0; }
 
-    /* ── INFO CARDS (replacing sidebar) — stacked below content ── */
+    /* ── SIDEBAR ── */
     .sidebar {
       display: grid;
       grid-template-columns: 1fr;
@@ -310,7 +304,6 @@
     .sb-head p  { font-size: 11.5px; color: rgba(255,255,255,.68); }
     .sb-body { padding: 16px 18px; }
 
-    /* "What we don't collect" — 2-col grid in sb-body */
     .dont-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -321,7 +314,6 @@
       font-size: 13px; color: var(--muted);
     }
 
-    /* infra 2-col */
     .infra-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -371,7 +363,6 @@
       box-shadow: 0 4px 18px rgba(13,71,161,.35);
       opacity: 0; transform: translateY(16px);
       transition: opacity .3s, transform .3s; z-index: 200;
-      /* Proper touch target */
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
     }
@@ -379,7 +370,6 @@
     #topBtn:active { background: var(--bright); transform: scale(.94); }
     #topBtn svg { width: 18px; height: 18px; fill: #fff; }
 
-    /* ── SMALL PHONES (≤ 360px) ── */
     @media (max-width: 360px) {
       .card-grid { grid-template-columns: 1fr 1fr; }
       .rights { grid-template-columns: repeat(2, 1fr); }
@@ -388,7 +378,6 @@
       .hero h1 { font-size: 26px; }
     }
 
-    /* ── TABLET / LARGER PHONES landscape (≥ 600px) ── */
     @media (min-width: 600px) {
       .layout { padding: 36px 28px 72px; }
       .hero { padding: 40px 28px 52px; }
@@ -396,10 +385,9 @@
       .card-grid { grid-template-columns: repeat(3, 1fr); }
       .rights { grid-template-columns: repeat(3, 1fr); }
       .sidebar { grid-template-columns: 1fr 1fr; }
-      .sidebar .ver { grid-column: 1 / -1; }
+      .sidebar .ver { grid-column: unset; }
     }
 
-    /* ── DESKTOP fallback (≥ 900px) ── */
     @media (min-width: 900px) {
       .layout {
         max-width: 1100px; margin: 0 auto;
@@ -421,8 +409,6 @@
     }
 
     strong { font-weight: 600; }
-
-    /* Make links tappable-friendly */
     a { -webkit-tap-highlight-color: rgba(41,121,255,.15); }
   </style>
 </head>
@@ -462,270 +448,242 @@
 
 <!-- LAYOUT -->
 <div class="layout">
-<main class="content">
+  <main class="content">
 
-  <!-- 01 -->
-  <section class="section" id="overview">
-    <div class="sec-num">Section 01</div>
-    <h2>Overview</h2>
-    <p>Rentora is a professional car rental management platform for small and medium-sized rental businesses. This Privacy Policy explains what information we collect, how we use it, and your rights regarding your data.</p>
-    <div class="hl">
-      <strong>Our promise:</strong> We collect only what is necessary to run Rentora. We will never sell, rent, or monetise your data. Your business information belongs to you.
-    </div>
-    <p>By registering a business account or using Rentora as an agent, you agree to the practices described here.</p>
-  </section>
+    <!-- 01 -->
+    <section class="section" id="overview">
+      <div class="sec-num">Section 01</div>
+      <h2>Overview</h2>
+      <p>Rentora is a professional car rental management platform for small and medium-sized rental businesses. This Privacy Policy explains what information we collect, how we use it, and your rights regarding your data.</p>
+      <div class="hl">
+        <strong>Our promise:</strong> We collect only what is necessary to run Rentora. We will never sell, rent, or monetise your data. Your business information belongs to you.
+      </div>
+      <p>By registering a business account or using Rentora as an agent, you agree to the practices described here.</p>
+    </section>
 
-  <!-- 02 -->
-  <section class="section" id="collection">
-    <div class="sec-num">Section 02</div>
-    <h2>Information We Collect</h2>
-    <p>We only collect information you provide directly, or that is generated naturally through using the app.</p>
-    <div class="card-grid">
-      <div class="dc">
-        <div class="dc-icon"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
-        <h4>Account Info</h4>
-        <p>Name, email, hashed password, role</p>
+    <!-- 02 -->
+    <section class="section" id="collection">
+      <div class="sec-num">Section 02</div>
+      <h2>Information We Collect</h2>
+      <p>We only collect information you provide directly, or that is generated naturally through using the app.</p>
+      <div class="card-grid">
+        <div class="dc">
+          <div class="dc-icon"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
+          <h4>Account Info</h4>
+          <p>Name, email, hashed password, role</p>
+        </div>
+        <div class="dc">
+          <div class="dc-icon"><svg viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg></div>
+          <h4>Business Info</h4>
+          <p>Company name, address, phone</p>
+        </div>
+        <div class="dc">
+          <div class="dc-icon"><svg viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99z"/></svg></div>
+          <h4>Fleet Data</h4>
+          <p>Vehicle names, plates, photos, rates</p>
+        </div>
+        <div class="dc">
+          <div class="dc-icon"><svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg></div>
+          <h4>Bookings</h4>
+          <p>Customer names, contacts, CNIC, dates</p>
+        </div>
+        <div class="dc">
+          <div class="dc-icon"><svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg></div>
+          <h4>Payment Data</h4>
+          <p>Advances, balances, extra charges</p>
+        </div>
+        <div class="dc">
+          <div class="dc-icon"><svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg></div>
+          <h4>Usage Data</h4>
+          <p>Anonymous crash &amp; performance reports</p>
+        </div>
       </div>
-      <div class="dc">
-        <div class="dc-icon"><svg viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg></div>
-        <h4>Business Info</h4>
-        <p>Company name, address, phone</p>
-      </div>
-      <div class="dc">
-        <div class="dc-icon"><svg viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99z"/></svg></div>
-        <h4>Fleet Data</h4>
-        <p>Vehicle names, plates, photos, rates</p>
-      </div>
-      <div class="dc">
-        <div class="dc-icon"><svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg></div>
-        <h4>Bookings</h4>
-        <p>Customer names, contacts, CNIC, dates</p>
-      </div>
-      <div class="dc">
-        <div class="dc-icon"><svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg></div>
-        <h4>Payment Data</h4>
-        <p>Advances, balances, extra charges</p>
-      </div>
-      <div class="dc">
-        <div class="dc-icon"><svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg></div>
-        <h4>Usage Data</h4>
-        <p>Anonymous crash &amp; performance reports</p>
-      </div>
-    </div>
-    <p>We do <strong>not</strong> collect bank details, credit card numbers, GPS location, biometrics, or advertising identifiers.</p>
-  </section>
+      <p>We do <strong>not</strong> collect bank details, credit card numbers, GPS location, biometrics, or advertising identifiers.</p>
+    </section>
 
-  <!-- 03 -->
-  <section class="section" id="usage">
-    <div class="sec-num">Section 03</div>
-    <h2>How We Use Your Information</h2>
-    <p>Every piece of data serves a specific operational purpose. We never use your data for advertising or profiling.</p>
-    <div class="ptable-wrap">
-      <table class="ptable">
-        <thead><tr><th>Data Type</th><th>Purpose</th><th>Basis</th></tr></thead>
-        <tbody>
+    <!-- 03 -->
+    <section class="section" id="usage">
+      <div class="sec-num">Section 03</div>
+      <h2>How We Use Your Information</h2>
+      <p>Every piece of data serves a specific operational purpose. We never use your data for advertising or profiling.</p>
+      <div class="ptable-wrap">
+        <table class="ptable">
+          <thead><tr><th>Data Type</th><th>Purpose</th><th>Basis</th></tr></thead>
+          <tbody>
           <tr><td>Account credentials</td><td>Authentication &amp; sessions</td><td>Contract</td></tr>
           <tr><td>Business info</td><td>Company profile &amp; isolation</td><td>Contract</td></tr>
           <tr><td>Fleet &amp; booking data</td><td>Core rental features</td><td>Contract</td></tr>
           <tr><td>Customer details</td><td>Booking &amp; payment tracking</td><td>Legitimate interest</td></tr>
           <tr><td>Vehicle photos</td><td>Fleet display within your account</td><td>Contract</td></tr>
           <tr><td>Usage metrics</td><td>Bug fixes &amp; improvements</td><td>Legitimate interest</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
-  <!-- 04 -->
-  <section class="section" id="storage">
-    <div class="sec-num">Section 04</div>
-    <h2>Storage &amp; Security</h2>
-    <p>We use enterprise-grade cloud infrastructure to protect your data at every layer.</p>
-    <ul class="plist">
-      <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>Google Firebase</strong> — AES-256 encryption at rest, TLS 1.3 in transit for all structured data.</span></li>
-      <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>Cloudinary</strong> — Vehicle photos stored on Cloudinary's secure CDN with access-controlled URLs.</span></li>
-      <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>Passwords</strong> — Never stored in plain text. Firebase Auth handles secure hashing and token management.</span></li>
-      <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>Data isolation</strong> — Each company's data is logically isolated with a unique ID. Security rules prevent cross-company access entirely.</span></li>
-      <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>No sensitive local caching</strong> — Booking records and CNIC data are not stored on your device.</span></li>
-    </ul>
-    <div class="card">
-      <strong style="font-family:'Syne',sans-serif;display:block;margin-bottom:6px;">Security Incident Response</strong>
-      <p style="margin:0;font-size:13.5px;color:var(--muted);">In the event of a breach affecting your account, we will notify you by email within 72 hours of becoming aware of it.</p>
-    </div>
-  </section>
+    <!-- 04 -->
+    <section class="section" id="storage">
+      <div class="sec-num">Section 04</div>
+      <h2>Storage &amp; Security</h2>
+      <p>We use enterprise-grade cloud infrastructure to protect your data at every layer.</p>
+      <ul class="plist">
+        <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>Google Firebase</strong> — AES-256 encryption at rest, TLS 1.3 in transit for all structured data.</span></li>
+        <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>Cloudinary</strong> — Vehicle photos stored on Cloudinary's secure CDN with access-controlled URLs.</span></li>
+        <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>Passwords</strong> — Never stored in plain text. Firebase Auth handles secure hashing and token management.</span></li>
+        <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>Data isolation</strong> — Each company's data is logically isolated with a unique ID. Security rules prevent cross-company access entirely.</span></li>
+        <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>No sensitive local caching</strong> — Booking records and CNIC data are not stored on your device.</span></li>
+      </ul>
+      <div class="card">
+        <strong style="font-family:'Syne',sans-serif;display:block;margin-bottom:6px;">Security Incident Response</strong>
+        <p style="margin:0;font-size:13.5px;color:var(--muted);">In the event of a breach affecting your account, we will notify you by email within 72 hours of becoming aware of it.</p>
+      </div>
+    </section>
 
-  <!-- 05 -->
-  <section class="section" id="sharing">
-    <div class="sec-num">Section 05</div>
-    <h2>Data Sharing &amp; Third Parties</h2>
-    <p>We do not sell or share your data for advertising. The only third parties that may process your data are infrastructure providers essential to running Rentora.</p>
-    <ul class="plist">
-      <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>Google Firebase</strong> — database, authentication, cloud storage.</span></li>
-      <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>Cloudinary</strong> — image hosting and delivery.</span></li>
-      <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>Legal obligation</strong> — we may disclose data only if required by law or a valid court order.</span></li>
-    </ul>
-    <div class="hl">No analytics platforms, ad networks, or data brokers have access to your Rentora data. <strong>Period.</strong></div>
-  </section>
+    <!-- 05 -->
+    <section class="section" id="sharing">
+      <div class="sec-num">Section 05</div>
+      <h2>Data Sharing &amp; Third Parties</h2>
+      <p>We do not sell or share your data for advertising. The only third parties that may process your data are infrastructure providers essential to running Rentora.</p>
+      <ul class="plist">
+        <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>Google Firebase</strong> — database, authentication, cloud storage.</span></li>
+        <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>Cloudinary</strong> — image hosting and delivery.</span></li>
+        <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>Legal obligation</strong> — we may disclose data only if required by law or a valid court order.</span></li>
+      </ul>
+      <div class="hl">No analytics platforms, ad networks, or data brokers have access to your Rentora data. <strong>Period.</strong></div>
+    </section>
 
-  <!-- 06 -->
-  <section class="section" id="access">
-    <div class="sec-num">Section 06</div>
-    <h2>Role-Based Access Control</h2>
-    <p>Access to data is scoped strictly by role and company affiliation. Users can never access another company's data.</p>
-    <div class="ptable-wrap">
-      <table class="ptable">
-        <thead><tr><th>Feature</th><th>Admin</th><th>Agent</th></tr></thead>
-        <tbody>
+    <!-- 06 -->
+    <section class="section" id="access">
+      <div class="sec-num">Section 06</div>
+      <h2>Role-Based Access Control</h2>
+      <p>Access to data is scoped strictly by role and company affiliation. Users can never access another company's data.</p>
+      <div class="ptable-wrap">
+        <table class="ptable">
+          <thead><tr><th>Feature</th><th>Admin</th><th>Agent</th></tr></thead>
+          <tbody>
           <tr><td>View all bookings</td><td>✅ Full</td><td>✅ Company-wide</td></tr>
           <tr><td>Create bookings</td><td>✅ Yes</td><td>✅ Yes</td></tr>
           <tr><td>Delete bookings</td><td>✅ Yes</td><td>❌ No</td></tr>
           <tr><td>Manage vehicles</td><td>✅ Full CRUD</td><td>👁 View only</td></tr>
           <tr><td>Manage agents</td><td>✅ Yes</td><td>❌ No</td></tr>
           <tr><td>See another company</td><td>❌ Never</td><td>❌ Never</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p>Admins can disable an agent's access at any time. Disabled agents cannot log in until re-enabled.</p>
-  </section>
+          </tbody>
+        </table>
+      </div>
+      <p>Admins can disable an agent's access at any time. Disabled agents cannot log in until re-enabled.</p>
+    </section>
 
-  <!-- 07 -->
-  <section class="section" id="retention">
-    <div class="sec-num">Section 07</div>
-    <h2>Data Retention</h2>
-    <p>We keep your data only as long as necessary to provide the service.</p>
-    <ul class="plist">
-      <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>Active accounts:</strong> Data retained for the lifetime of your business account.</span></li>
-      <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>Account deletion:</strong> All data permanently removed within <strong>30 days</strong> of a written deletion request.</span></li>
-      <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>Agent removal:</strong> Firestore profile deleted immediately when removed by an admin.</span></li>
-      <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>Backups:</strong> Firebase automated backups may retain deleted data for up to 30 days before purging.</span></li>
-    </ul>
-  </section>
+    <!-- 07 -->
+    <section class="section" id="retention">
+      <div class="sec-num">Section 07</div>
+      <h2>Data Retention</h2>
+      <p>We keep your data only as long as necessary to provide the service.</p>
+      <ul class="plist">
+        <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>Active accounts:</strong> Data retained for the lifetime of your business account.</span></li>
+        <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>Account deletion:</strong> All data permanently removed within <strong>30 days</strong> of a written deletion request.</span></li>
+        <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>Agent removal:</strong> Firestore profile deleted immediately when removed by an admin.</span></li>
+        <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>Backups:</strong> Firebase automated backups may retain deleted data for up to 30 days before purging.</span></li>
+      </ul>
+    </section>
 
-  <!-- 08 -->
-  <section class="section" id="rights">
-    <div class="sec-num">Section 08</div>
-    <h2>Your Rights</h2>
-    <p>You have the following rights over your personal data. Email us at <strong>privacy@rentora.app</strong> to exercise any of them — we'll respond within 30 days.</p>
-    <div class="rights">
-      <div class="rpill"><span class="rpill-ico">👁</span><div class="rpill-lbl">Right to Access</div></div>
-      <div class="rpill"><span class="rpill-ico">✏️</span><div class="rpill-lbl">Right to Rectify</div></div>
-      <div class="rpill"><span class="rpill-ico">🗑️</span><div class="rpill-lbl">Right to Erasure</div></div>
-      <div class="rpill"><span class="rpill-ico">⏸️</span><div class="rpill-lbl">Right to Restrict</div></div>
-      <div class="rpill"><span class="rpill-ico">📦</span><div class="rpill-lbl">Data Portability</div></div>
-      <div class="rpill"><span class="rpill-ico">🚫</span><div class="rpill-lbl">Right to Object</div></div>
-    </div>
-  </section>
+    <!-- 08 -->
+    <section class="section" id="rights">
+      <div class="sec-num">Section 08</div>
+      <h2>Your Rights</h2>
+      <p>You have the following rights over your personal data. Email us at <strong>bagay810@gmail.com</strong> to exercise any of them — we'll respond within 30 days.</p>
+      <div class="rights">
+        <div class="rpill"><span class="rpill-ico">👁</span><div class="rpill-lbl">Right to Access</div></div>
+        <div class="rpill"><span class="rpill-ico">✏️</span><div class="rpill-lbl">Right to Rectify</div></div>
+        <div class="rpill"><span class="rpill-ico">🗑️</span><div class="rpill-lbl">Right to Erasure</div></div>
+        <div class="rpill"><span class="rpill-ico">⏸️</span><div class="rpill-lbl">Right to Restrict</div></div>
+        <div class="rpill"><span class="rpill-ico">📦</span><div class="rpill-lbl">Data Portability</div></div>
+        <div class="rpill"><span class="rpill-ico">🚫</span><div class="rpill-lbl">Right to Object</div></div>
+      </div>
+    </section>
 
-  <!-- 09 -->
-  <section class="section" id="cookies">
-    <div class="sec-num">Section 09</div>
-    <h2>Cookies &amp; Local Storage</h2>
-    <p>Rentora is a native mobile app and does <strong>not</strong> use cookies. Only these lightweight mechanisms are used for app functionality:</p>
-    <ul class="plist">
-      <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>SharedPreferences</strong> — stores only onboarding completion and permission status. No personal data.</span></li>
-      <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>Firebase Auth tokens</strong> — secure session tokens handled by Firebase SDK in your device's secure storage.</span></li>
-      <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>No advertising IDs</strong> — we do not access GAID, IDFA, or any device advertising identifier.</span></li>
-    </ul>
-  </section>
+    <!-- 09 -->
+    <section class="section" id="cookies">
+      <div class="sec-num">Section 09</div>
+      <h2>Cookies &amp; Local Storage</h2>
+      <p>Rentora is a native mobile app and does <strong>not</strong> use cookies. Only these lightweight mechanisms are used for app functionality:</p>
+      <ul class="plist">
+        <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>SharedPreferences</strong> — stores only onboarding completion and permission status. No personal data.</span></li>
+        <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>Firebase Auth tokens</strong> — secure session tokens handled by Firebase SDK in your device's secure storage.</span></li>
+        <li><span class="lico"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span><strong>No advertising IDs</strong> — we do not access GAID, IDFA, or any device advertising identifier.</span></li>
+      </ul>
+    </section>
 
-  <!-- 10 -->
-  <section class="section" id="children">
-    <div class="sec-num">Section 10</div>
-    <h2>Children's Privacy</h2>
-    <p>Rentora is intended exclusively for adults operating or working within a vehicle rental business. We do not knowingly collect data from anyone under 18.</p>
-    <p>If you believe a minor has created an account, contact us at <strong>privacy@rentora.app</strong> and we'll delete it promptly.</p>
-  </section>
+    <!-- 10 -->
+    <section class="section" id="children">
+      <div class="sec-num">Section 10</div>
+      <h2>Children's Privacy</h2>
+      <p>Rentora is intended exclusively for adults operating or working within a vehicle rental business. We do not knowingly collect data from anyone under 18.</p>
+      <p>If you believe a minor has created an account, contact us at <strong>bagay810@gmail.com</strong> and we'll delete it promptly.</p>
+    </section>
 
-  <!-- 11 -->
-  <section class="section" id="contact">
-    <div class="sec-num">Section 11</div>
-    <h2>Contact Us</h2>
-    <p>Have a question, concern, or data request? We're happy to help.</p>
-    <div class="card">
-      <a href="mailto:privacy@rentora.app" style="text-decoration:none">
+
+
+  </main>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <div class="sb-card">
+      <div class="sb-head">
+        <h3>Quick Contact</h3>
+        <p>PATRICIA IW ROSSELL LLC</p>
+      </div>
+      <div class="sb-body">
         <div class="crow">
           <div class="cico"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></div>
-          <div><div class="clabel">Privacy Email</div><div class="cval">privacy@rentora.app</div></div>
+          <div><div class="clabel">Email</div><div class="cval" style="font-size:12px">bagay810@gmail.com</div></div>
         </div>
-      </a>
-      <a href="https://www.rentora.app" style="text-decoration:none">
         <div class="crow">
-          <div class="cico"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div>
-          <div><div class="clabel">Website</div><div class="cval">www.rentora.app</div></div>
-        </div>
-      </a>
-      <div class="crow">
-        <div class="cico"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></div>
-        <div><div class="clabel">Response Time</div><div class="cval">Within 5 business days</div></div>
-      </div>
-    </div>
-  </section>
-
-</main>
-
-<!-- SIDEBAR / INFO CARDS — stacked below on mobile -->
-<aside class="sidebar">
-
-  <div class="ver">
-    <span class="ver-lbl">Document version</span>
-    <span class="ver-val">v1.0.0</span>
-  </div>
-
-  <div class="sb-card">
-    <div class="sb-head">
-      <h3>Quick Contact</h3>
-      <p>Privacy-related enquiries</p>
-    </div>
-    <div class="sb-body">
-      <div class="crow">
-        <div class="cico"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg></div>
-        <div><div class="clabel">Email</div><div class="cval" style="font-size:12px">privacy@rentora.app</div></div>
-      </div>
-      <div class="crow">
-        <div class="cico"><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg></div>
-        <div><div class="clabel">Response</div><div class="cval" style="font-size:12px">5 business days</div></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="sb-card">
-    <div class="sb-head green">
-      <h3>What We DON'T Collect</h3>
-      <p>For your peace of mind</p>
-    </div>
-    <div class="sb-body">
-      <div class="dont-grid">
-        <div class="dont-item"><span class="lico" style="background:#E8F5E9"><svg viewBox="0 0 24 24" style="fill:#1B5E20"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span style="font-size:13px">No bank details</span></div>
-        <div class="dont-item"><span class="lico" style="background:#E8F5E9"><svg viewBox="0 0 24 24" style="fill:#1B5E20"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span style="font-size:13px">No credit cards</span></div>
-        <div class="dont-item"><span class="lico" style="background:#E8F5E9"><svg viewBox="0 0 24 24" style="fill:#1B5E20"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span style="font-size:13px">No GPS location</span></div>
-        <div class="dont-item"><span class="lico" style="background:#E8F5E9"><svg viewBox="0 0 24 24" style="fill:#1B5E20"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span style="font-size:13px">No biometrics</span></div>
-        <div class="dont-item"><span class="lico" style="background:#E8F5E9"><svg viewBox="0 0 24 24" style="fill:#1B5E20"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span style="font-size:13px">No ad tracking</span></div>
-        <div class="dont-item"><span class="lico" style="background:#E8F5E9"><svg viewBox="0 0 24 24" style="fill:#1B5E20"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span style="font-size:13px">No plain passwords</span></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="sb-card">
-    <div class="sb-head purple">
-      <h3>Infrastructure</h3>
-      <p>Trusted providers we rely on</p>
-    </div>
-    <div class="sb-body">
-      <div class="infra-grid">
-        <div class="infra-item">
-          <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
-          <div class="clabel">Database &amp; Auth</div>
-          <div class="cval" style="font-size:12px">Google Firebase</div>
-        </div>
-        <div class="infra-item">
-          <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
-          <div class="clabel">Image Storage</div>
-          <div class="cval" style="font-size:12px">Cloudinary CDN</div>
+          <div class="cico"><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg></div>
+          <div><div class="clabel">Response</div><div class="cval" style="font-size:12px">5 business days</div></div>
         </div>
       </div>
     </div>
-  </div>
 
-</aside>
+    <div class="sb-card">
+      <div class="sb-head green">
+        <h3>What We DON'T Collect</h3>
+        <p>For your peace of mind</p>
+      </div>
+      <div class="sb-body">
+        <div class="dont-grid">
+          <div class="dont-item"><span class="lico" style="background:#E8F5E9"><svg viewBox="0 0 24 24" style="fill:#1B5E20"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span style="font-size:13px">No bank details</span></div>
+          <div class="dont-item"><span class="lico" style="background:#E8F5E9"><svg viewBox="0 0 24 24" style="fill:#1B5E20"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span style="font-size:13px">No credit cards</span></div>
+          <div class="dont-item"><span class="lico" style="background:#E8F5E9"><svg viewBox="0 0 24 24" style="fill:#1B5E20"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span style="font-size:13px">No GPS location</span></div>
+          <div class="dont-item"><span class="lico" style="background:#E8F5E9"><svg viewBox="0 0 24 24" style="fill:#1B5E20"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span style="font-size:13px">No biometrics</span></div>
+          <div class="dont-item"><span class="lico" style="background:#E8F5E9"><svg viewBox="0 0 24 24" style="fill:#1B5E20"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span style="font-size:13px">No ad tracking</span></div>
+          <div class="dont-item"><span class="lico" style="background:#E8F5E9"><svg viewBox="0 0 24 24" style="fill:#1B5E20"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span><span style="font-size:13px">No plain passwords</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sb-card">
+      <div class="sb-head purple">
+        <h3>Infrastructure</h3>
+        <p>Trusted providers we rely on</p>
+      </div>
+      <div class="sb-body">
+        <div class="infra-grid">
+          <div class="infra-item">
+            <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+            <div class="clabel">Database &amp; Auth</div>
+            <div class="cval" style="font-size:12px">Google Firebase</div>
+          </div>
+          <div class="infra-item">
+            <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+            <div class="clabel">Image Storage</div>
+            <div class="cval" style="font-size:12px">Cloudinary CDN</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </aside>
 </div>
 
 <!-- FOOTER -->
@@ -744,27 +702,3 @@
   <svg viewBox="0 0 24 24"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
 </button>
 
-<script>
-  const btn = document.getElementById('topBtn');
-  window.addEventListener('scroll', () => btn.classList.toggle('show', scrollY > 300), {passive:true});
-
-  const secs  = document.querySelectorAll('section[id]');
-  const links = document.querySelectorAll('.toc-link');
-
-  // Auto-scroll active TOC link into view
-  function setActive(id) {
-    links.forEach(l => l.classList.remove('active'));
-    const a = document.querySelector(`.toc-link[href="#${id}"]`);
-    if (a) {
-      a.classList.add('active');
-      a.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
-    }
-  }
-
-  secs.forEach(s => new IntersectionObserver(entries => {
-    if (entries[0].isIntersecting) setActive(s.id);
-  }, { rootMargin: '-25% 0px -60% 0px' }).observe(s));
-</script>
-
-</body>
-</html>
