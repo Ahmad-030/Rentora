@@ -8,6 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'dart:io';
 import 'shared.dart';
+import 'main.dart';
 
 // ─────────────────────────────────────────────
 // ADMIN DASHBOARD (root with bottom nav)
@@ -206,7 +207,6 @@ class AdminHomeTab extends StatelessWidget {
                               child: Text('No bookings yet',
                                   style: TextStyle(color: Colors.black45))))
                     else
-                    // showAgent: true so admin sees who booked each car
                       ...bookings
                           .take(5)
                           .map((b) => BookingTile(
@@ -753,7 +753,6 @@ class _BookingsTabState extends State<BookingsTab>
         )
             : BookingTile(
           booking: booking,
-          // Admin sees agent info on every booking tile
           showAgent: widget.isAdmin,
           onTap: () => Navigator.push(
               context,
@@ -850,7 +849,6 @@ class _DismissibleBookingTile extends StatelessWidget {
           ],
         ),
       ),
-      // showAgent: isAdmin so dismissed tiles also show agent when admin views them
       child: BookingTile(booking: booking, onTap: onTap, showAgent: isAdmin),
     );
   }
@@ -1193,7 +1191,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                       _row(Icons.add_circle_outline, 'Extra Charges',
                           'Rs. ${b.extraCharges!.toStringAsFixed(0)}'),
 
-                    // ── Agent info section (admin only) ──
                     if (isAdmin && b.createdBy.isNotEmpty) ...[
                       const Divider(height: 24),
                       const Text(
@@ -1878,8 +1875,9 @@ class AdminSettingsScreen extends StatelessWidget {
                   color: Colors.black45,
                   fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
+          // ── FIXED: uses AppLogout instead of FirebaseService.signOut() ──
           _tile(context, 'Logout', Icons.logout, () async {
-            await FirebaseService.signOut();
+            await AppLogout.logout(context);
           }, color: RentoraTheme.error),
         ],
       ),
@@ -1947,7 +1945,6 @@ class AboutScreen extends StatelessWidget {
                     color: RentoraTheme.primary)),
             const Text('Smart Rentals. Total Control.',
                 style: TextStyle(color: Colors.black54, fontSize: 14)),
-            const SizedBox(height: 6),
             const SizedBox(height: 30),
             _section('What is Rentora?',
                 'Rentora is a professional car rental management application built for small and medium businesses. It helps you manage your fleet, bookings, payments, and agents all in one place.'),
@@ -2019,7 +2016,6 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
           },
         ),
       );
-
     _loadHtml();
   }
 
@@ -2054,16 +2050,11 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircularProgressIndicator(
-                    color: Color(0xFF2979FF),
-                  ),
+                  CircularProgressIndicator(color: Color(0xFF2979FF)),
                   SizedBox(height: 12),
                   Text(
                     'Loading privacy policy…',
-                    style: TextStyle(
-                      color: Color(0xFF8898AA),
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: Color(0xFF8898AA), fontSize: 13),
                   ),
                 ],
               ),
@@ -2073,6 +2064,10 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
     );
   }
 }
+
+// ─────────────────────────────────────────────
+// CONTACT US SCREEN
+// ─────────────────────────────────────────────
 
 class ContactUsScreen extends StatelessWidget {
   const ContactUsScreen({super.key});
@@ -2086,7 +2081,6 @@ class ContactUsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
@@ -2121,8 +2115,6 @@ class ContactUsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 28),
-
-            // Company name
             const Text(
               'PATRICIA IW ROSSELL LLC',
               style: TextStyle(
@@ -2133,8 +2125,6 @@ class ContactUsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-
-            // Email card
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -2154,23 +2144,17 @@ class ContactUsScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Email',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                              color: Colors.black54,
-                            ),
-                          ),
+                          Text('Email',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                  color: Colors.black54)),
                           SizedBox(height: 2),
-                          Text(
-                            'bagay810@gmail.com',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 15,
-                              color: RentoraTheme.primary,
-                            ),
-                          ),
+                          Text('bagay810@gmail.com',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
+                                  color: RentoraTheme.primary)),
                         ],
                       ),
                     ),
@@ -2194,10 +2178,7 @@ class ContactUsScreen extends StatelessWidget {
                 ),
               ),
             ),
-
             const SizedBox(height: 16),
-
-            // Response time info
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -2212,8 +2193,8 @@ class ContactUsScreen extends StatelessWidget {
                   Expanded(
                     child: Text(
                       'We typically respond within 5 business days.',
-                      style: TextStyle(
-                          fontSize: 13, color: Colors.blue, height: 1.4),
+                      style:
+                      TextStyle(fontSize: 13, color: Colors.blue, height: 1.4),
                     ),
                   ),
                 ],
