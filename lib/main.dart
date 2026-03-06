@@ -760,13 +760,6 @@ class _PermissionScreenState extends State<PermissionScreen>
 
   final List<Map<String, dynamic>> _permissions = [
     {
-      'icon': Icons.photo_library_outlined,
-      'label': 'Gallery Access',
-      'desc': 'To select & upload vehicle photos from your gallery',
-      'permission': Permission.photos,
-      'granted': false,
-    },
-    {
       'icon': Icons.camera_alt_outlined,
       'label': 'Camera',
       'desc': 'To take photos of vehicles directly in-app',

@@ -367,12 +367,10 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
         setState(() => _imageFile = File(picked.path));
       }
     } catch (e) {
-      final msg = e.toString().toLowerCase();
-      final isPermissionError = msg.contains('permission') ||
-          msg.contains('denied') ||
-          msg.contains('access');
-      if (isPermissionError && mounted) {
-        _showPermissionDialog();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open gallery. Please try again.')),
+        );
       }
     }
   }
