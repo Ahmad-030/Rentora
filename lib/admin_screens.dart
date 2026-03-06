@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'dart:io';
 import 'shared.dart';
@@ -373,41 +372,6 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
         );
       }
     }
-  }
-
-  void _showPermissionDialog() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape:
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.photo_library, color: RentoraTheme.primary),
-            SizedBox(width: 10),
-            Text('Permission Required'),
-          ],
-        ),
-        content: const Text(
-          'Gallery access was denied.\n\n'
-              'Please enable it in your device Settings → App Permissions → Photos.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.settings, size: 16),
-            label: const Text('Open Settings'),
-            onPressed: () {
-              Navigator.pop(context);
-              openAppSettings();
-            },
-          ),
-        ],
-      ),
-    );
   }
 
   Future<void> _save() async {
